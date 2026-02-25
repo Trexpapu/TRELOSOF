@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Tabulador de Efectivo - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos copiados y adaptados de detalle_dia.html */
+    .header-section {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .tabulacion-container {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .denominaciones-panel {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .denominaciones-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .denominacion-group {
+        background: rgba(30, 41, 59, 0.3);
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .group-title {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .denom-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        gap: 1rem;
+    }
+
+    .denom-value {
+        font-weight: 600;
+        color: var(--text-light);
+        width: 80px;
+        text-align: right; 
+    }
+
+    .denom-input {
+        flex: 1;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.5rem;
+        color: var(--text-light);
+        text-align: right;
+        font-family: inherit;
+    }
+    
+    .denom-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .denom-total-row {
+        text-align: right;
+        font-weight: 600;
+        color: var(--accent-blue);
+        min-width: 100px;
+    }
+
+    .resumen-panel {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .total-display {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .total-label {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .total-value {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--accent-green);
+    }
+
+    .btn-export {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+    }
+    
+    .fecha-control {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .date-input {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-family: inherit;
+    }
+
+    @media (max-width: 768px) {
+        .tabulacion-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .header-section {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="day-detail-container"> <!-- Reuse container styles if available or fallback -->
+    
+    <div class="header-section">
+        <h1 class="page-title"><i class="fas fa-calculator"></i> Tabulador de Efectivo</h1>
+        <div class="fecha-control">
+            <label for="fechaTabulador" style="color: var(--text-light)">Fecha:</label>
+            <input type="date" id="fechaTabulador" class="date-input" value="{{ hoy|date:'Y-m-d' }}">
+        </div>
+    </div>
+
+    <div class="tabulacion-container">
+        <!-- Panel de Denominaciones (Dinámico) -->
+        <div class="denominaciones-panel">
+            <div id="dynamicRowsContainer">
+                <!-- Headers -->
+                <div class="denom-row header">
+                    <div style="flex: 1; color: var(--text-muted); font-size: 0.9rem;">Monto / Denominación</div>
+                    <div style="flex: 1; color: var(--text-muted); font-size: 0.9rem;">Cantidad</div>
+                    <div style="width: 100px; text-align: right; color: var(--text-muted); font-size: 0.9rem;">Total</div>
+                    <div style="width: 30px;"></div>
+                </div>
+                
+                <!-- Rows will be added here -->
+            </div>
+
+            <button type="button" class="btn-add-row" id="btnAddRow">
+                <i class="fas fa-plus"></i> Agregar Fila
+            </button>
+            
+            <!-- Notas opcionales -->
+             <div class="denominacion-group" style="margin-top: 1.5rem;">
+                <h3 class="group-title">Notas / Observaciones</h3>
+                <textarea id="notas" class="denom-input" style="text-align: left; width: 100%; min-height: 80px; resize: vertical;" placeholder="Alguna nota sobre este corte de caja..."></textarea>
+             </div>
+        </div>
+
+        <!-- Panel de Resumen -->
+        <div class="resumen-panel">
+            <div class="total-display">
+                <div class="total-label">Total Efectivo</div>
+                <div class="total-value" id="totalGeneral">$0.00</div>
+            </div>
+
+            <button type="button" class="btn-export" id="btnExportar">
+                <i class="fas fa-file-pdf"></i> Generar PDF
+            </button>
+            <div id="exportMessage" style="color: var(--text-green); text-align: center; margin-top: 1rem; display: none;">
+                <i class="fas fa-check-circle"></i> PDF Generado
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="rowTemplate">
+    <div class="denom-row dynamic-entry">
+        <div class="input-wrapper" style="flex: 1; position: relative;">
+            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">$</span>
+            <input type="number" class="denom-input input-valor" placeholder="0.00" step="0.50" style="padding-left: 1.5rem;">
+        </div>
+        <input type="number" class="denom-input input-cantidad" placeholder="0" style="flex: 1;">
+        <div class="denom-total-row">$0.00</div>
+        <button type="button" class="btn-remove-row" title="Eliminar fila">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</template>
+
+<style>
+    /* Estilos adicionales para filas dinámicas */
+    .btn-add-row {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px dashed var(--accent-blue);
+        color: var(--accent-blue);
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-add-row:hover {
+        background: rgba(59, 130, 246, 0.2);
+    }
+
+    .denom-row.header {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-remove-row {
+        width: 30px;
+        height: 30px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .btn-remove-row:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--accent-red);
+    }
+</style>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('dynamicRowsContainer');
+    const template = document.getElementById('rowTemplate');
+    const btnAddRow = document.getElementById('btnAddRow');
+    const totalGeneralEl = document.getElementById('totalGeneral');
+    const btnExportar = document.getElementById('btnExportar');
+    const exportMessage = document.getElementById('exportMessage');
+
+    // Función para crear una nueva fila
+    function createRow(valorInicial = '', cantidadInicial = '') {
+        const clone = template.content.cloneNode(true);
+        const row = clone.querySelector('.denom-row');
+        
+        const inputValor = row.querySelector('.input-valor');
+        const inputCantidad = row.querySelector('.input-cantidad');
+        const btnRemove = row.querySelector('.btn-remove-row');
+        
+        if (valorInicial) inputValor.value = valorInicial;
+        if (cantidadInicial) inputCantidad.value = cantidadInicial;
+        
+        // Event listeners
+        inputValor.addEventListener('input', calcularTotales);
+        inputCantidad.addEventListener('input', calcularTotales);
+        
+        btnRemove.addEventListener('click', () => {
+            row.remove();
+            calcularTotales();
+        });
+
+        container.appendChild(row);
+        
+        // Foco inmediato si es nueva inserción manual
+        if (!valorInicial && !cantidadInicial) {
+            inputValor.focus();
+        }
+    }
+
+    function calcularTotales() {
+        let granTotal = 0;
+        const rows = container.querySelectorAll('.dynamic-entry');
+
+        rows.forEach(row => {
+            const valInput = row.querySelector('.input-valor');
+            const cantInput = row.querySelector('.input-cantidad');
+            const totalDisplay = row.querySelector('.denom-total-row');
+
+            const valor = parseFloat(valInput.value) || 0;
+            const cantidad = parseFloat(cantInput.value) || 0;
+            const subtotal = valor * cantidad;
+            
+            totalDisplay.textContent = '$' + subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            granTotal += subtotal;
+        });
+
+        totalGeneralEl.textContent = '$' + granTotal.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        return granTotal;
+    }
+
+    // Agregar fila inicial por defecto o cargar defaults comunes si se desea
+    // Por ahora iniciamos con 1 fila vacía
+    createRow();
+
+    btnAddRow.addEventListener('click', () => createRow());
+
+    // Exportar PDF
+    btnExportar.addEventListener('click', async function() {
+        const fecha = document.getElementById('fechaTabulador').value;
+        const notas = document.getElementById('notas').value;
+        const total = calcularTotales();
+        
+        // Recopilar filas válidas
+        const filas = [];
+        const rows = container.querySelectorAll('.dynamic-entry');
+        
+        rows.forEach(row => {
+            const valInput = row.querySelector('.input-valor');
+            const cantInput = row.querySelector('.input-cantidad');
+            
+            const valor = parseFloat(valInput.value) || 0;
+            const cantidad = parseFloat(cantInput.value) || 0;
+            
+            if (valor > 0 && cantidad > 0) {
+                filas.push({
+                    denom: valor,
+                    cantidad: cantidad,
+                    total: valor * cantidad
+                });
+            }
+        });
+        
+        // Ordenar filas de mayor valor a menor
+        filas.sort((a, b) => b.denom - a.denom);
+
+        const payload = {
+            fecha: fecha,
+            tabulacion_total: total,
+            filas: filas,
+            notas: notas
+        };
+
+        const originalText = btnExportar.innerHTML;
+        btnExportar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        btnExportar.disabled = true;
+
+        try {
+            const response = await fetch("{% url 'exportar-tabulacion-simple' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Tabulacion_${fecha}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                
+                exportMessage.style.display = 'block';
+                setTimeout(() => exportMessage.style.display = 'none', 3000);
+            } else {
+                console.error('Error exportando PDF');
+                alert('Hubo un error al generar el PDF.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de conexión.');
+        } finally {
+            btnExportar.innerHTML = originalText;
+            btnExportar.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1175 @@
+<!-- templates/facturas/crear_factura.html -->
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Crear Factura - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-factura-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+
+    .form-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title i {
+        color: var(--accent-blue);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .required::after {
+        content: " *";
+        color: #ef4444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .error-message {
+        color: #f87171;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .success-message {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #bbf7d0;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .info-message {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #93c5fd;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-submit {
+        flex: 1;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-cancel {
+        padding: 1rem 1.5rem;
+        background: rgba(30, 41, 59, 0.5);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    .currency-input {
+        position: relative;
+    }
+
+    .currency-symbol {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .currency-input .form-control {
+        padding-left: 2.5rem;
+    }
+
+    .help-text {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Estilos específicos para fechas de pago */
+    .fechas-pago-container {
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .fechas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .fechas-title {
+        color: var(--text-light);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .fecha-pago-item {
+        display: grid;
+        grid-template-columns: 1fr 200px 100px;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.3);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .fecha-pago-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .fecha-input {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .monto-input {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .fecha-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-fecha {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-fecha:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    .btn-fecha.remove:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--accent-red);
+    }
+
+    .btn-add-fecha {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-light);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    .btn-add-fecha:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    .distribucion-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.3);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .distribucion-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent-blue);
+    }
+
+    .resumen-montos {
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .resumen-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .resumen-total {
+        font-weight: 600;
+        color: var(--text-light);
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .create-factura-container {
+            padding: 0 0.5rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .form-card {
+            padding: 1.5rem;
+        }
+        
+        .fecha-pago-item {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        
+        .fecha-actions {
+            justify-content: flex-end;
+        }
+    }
+
+    /* Searchable Select Premium Styles */
+    .searchable-select-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        padding-right: 2.5rem;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        cursor: text;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: color 0.3s ease;
+    }
+
+    .search-input:focus + .search-icon {
+        color: var(--accent-blue);
+    }
+
+    .options-dropdown {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        right: 0;
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 50;
+        display: none;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .options-dropdown.show {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Custom Scrollbar for dropdown */
+    .options-dropdown::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .options-dropdown::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.3);
+        border-radius: 0 12px 12px 0;
+    }
+
+    .options-dropdown::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    .options-dropdown::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+
+    .option-item {
+        padding: 0.75rem 1rem;
+        color: var(--text-light);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .option-item:last-child {
+        border-bottom: none;
+    }
+
+    .option-item:hover {
+        background: rgba(59, 130, 246, 0.1);
+        padding-left: 1.5rem;
+        color: white;
+    }
+
+    .option-item.selected {
+        background: rgba(59, 130, 246, 0.2);
+        color: var(--accent-blue);
+        font-weight: 600;
+    }
+
+    .option-item .check-icon {
+        opacity: 0;
+        margin-left: auto;
+        color: var(--accent-blue);
+        transform: scale(0);
+        transition: all 0.2s ease;
+    }
+
+    .option-item.selected .check-icon {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .no-results {
+        padding: 1rem;
+        color: var(--text-muted);
+        text-align: center;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-factura-container">
+    <div class="page-header">
+        <h1 class="page-title">Crear Factura</h1>
+        <p class="page-subtitle">Registre una nueva factura de proveedor</p>
+    </div>
+
+
+    <div class="info-message">
+        <i class="fas fa-info-circle"></i>
+        <div>
+            <strong>Nota:</strong> Todas las facturas nuevas se crean con estado <strong>PENDIENTE</strong>. 
+            El estado se actualizará automáticamente cuando se registren abonos o pagos.
+        </div>
+    </div>
+
+    <div class="form-card">
+        <form method="post" novalidate id="facturaForm">
+            {% csrf_token %}
+            <!-- Campo oculto que preserva el origen (detalle-dia o lista-facturas) -->
+            <input type="hidden" name="next_url" value="{{ next_url }}">
+            
+            <!-- Campos ocultos para fechas y montos -->
+            <input type="hidden" id="id_fechas_pago" name="fechas_pago" value="{{ fecha_str }}">
+            <input type="hidden" id="id_montos_pago" name="montos_pago">
+            {{ form.distribucion_igual }}
+
+            <!-- Sección de información básica -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-file-invoice"></i>
+                    Información de la Factura
+                </h3>
+
+                <div class="form-grid">
+                    <!-- Proveedor -->
+                    <div class="form-group">
+                        <label for="{{ form.proveedor.id_for_label }}" class="form-label required">
+                            Proveedor
+                        </label>
+                        {{ form.proveedor|add_class:"form-control"|attr:"data-placeholder:Seleccione un proveedor" }}
+                        {% if form.proveedor.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.proveedor.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Folio -->
+                    <div class="form-group">
+                        <label for="{{ form.folio.id_for_label }}" class="form-label">
+                            Folio
+                        </label>
+                        {{ form.folio|add_class:"form-control"|attr:"placeholder:Folio de la factura" }}
+                        {% if form.folio.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.folio.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            Número único de identificación de la factura
+                        </div>
+                    </div>
+
+                    <!-- Tipo -->
+                    <div class="form-group">
+                        <label for="{{ form.tipo.id_for_label }}" class="form-label required">
+                            Tipo
+                        </label>
+                        {{ form.tipo|add_class:"form-control" }}
+                        {% if form.tipo.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.tipo.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cuenta a mostrar (override) -->
+                    <div class="form-group">
+                        <label for="{{ form.cuenta_override.id_for_label }}" class="form-label">
+                            <i class="fas fa-university" style="color: var(--accent-blue);"></i>
+                            Cuenta a Mostrar en PDF / Detalle
+                        </label>
+                        {{ form.cuenta_override|add_class:"form-control" }}
+                    </div>
+
+                    <!-- Monto Total -->
+
+                    <div class="form-group">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label required">
+                            Monto Total
+                        </label>
+                        <div class="currency-input">
+                            <span class="currency-symbol">$</span>
+                            {{ form.monto|add_class:"form-control"|attr:"placeholder:0.00"|attr:"step:0.01" }}
+                        </div>
+                        {% if form.monto.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.monto.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            Este monto se distribuirá entre las fechas de pago
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de fechas de pago -->
+            <div class="form-section">
+                <div class="fechas-pago-container">
+                    <div class="fechas-header">
+                        <div class="fechas-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Fechas de Pago
+                        </div>
+                        <div class="help-text">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Debe especificar al menos una fecha de pago
+                        </div>
+                    </div>
+
+                    <!-- Contenedor dinámico de fechas -->
+                    <div id="fechasContainer">
+                        <!-- Las fechas se agregarán aquí dinámicamente -->
+                    </div>
+
+                    <!-- Botón para agregar más fechas -->
+                    <button type="button" class="btn-add-fecha" id="btnAddFecha">
+                        <i class="fas fa-plus"></i>
+                        Agregar Otra Fecha de Pago
+                    </button>
+
+                    <!-- Opción de distribución -->
+                    <div class="distribucion-option">
+                        <input type="checkbox" id="distribucionIgual" name="distribucion_igual" checked>
+                        <label for="distribucionIgual" style="color: var(--text-light); cursor: pointer;">
+                            Distribuir el monto total equitativamente entre todas las fechas
+                        </label>
+                    </div>
+
+                    <!-- Resumen de montos -->
+                    <div class="resumen-montos" id="resumenMontos" style="display: none;">
+                        <div class="resumen-item">
+                            <span>Total factura:</span>
+                            <span id="totalFactura">$0.00</span>
+                        </div>
+                        <div class="resumen-item">
+                            <span>Total distribuido:</span>
+                            <span id="totalDistribuido">$0.00</span>
+                        </div>
+                        <div class="resumen-total" id="diferenciaMonto" style="color: #ef4444;">
+                            Diferencia: $0.00
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de notas -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-sticky-note"></i>
+                    Notas Adicionales
+                </h3>
+                
+                <div class="form-group">
+                    <label for="{{ form.notas.id_for_label }}" class="form-label">
+                        Notas
+                    </label>
+                    {{ form.notas|add_class:"form-control form-textarea"|attr:"rows:4"|attr:"placeholder:Información adicional sobre la factura" }}
+                    {% if form.notas.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.notas.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">
+                        <i class="fas fa-info-circle"></i>
+                        Puede incluir términos de pago, condiciones especiales u otra información relevante
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errores no asociados a campos específicos -->
+            {% if form.non_field_errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        {{ form.non_field_errors|join:", " }}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{{ next_url }}" class="btn-cancel">
+                    <i class="fas fa-times"></i>
+                    Regresar
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-save"></i>
+                    Crear Factura
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+// Script para el Dropdown Buscable (Provider Filter)
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initSearchableSelect();
+    });
+
+    function initSearchableSelect() {
+        const selectElement = document.getElementById('id_proveedor');
+        if (!selectElement) return;
+
+        // Ocultar select original
+        selectElement.style.display = 'none';
+
+        // Crear contenedor
+        const container = document.createElement('div');
+        container.className = 'searchable-select-container';
+        
+        // Crear input de búsqueda
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'search-input';
+        searchInput.placeholder = 'Buscar proveedor...';
+        
+        // Icono
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-search search-icon';
+
+        // Contenedor de opciones
+        const optionsList = document.createElement('div');
+        optionsList.className = 'options-dropdown';
+
+        // Construir DOM
+        selectElement.parentNode.insertBefore(container, selectElement);
+        container.appendChild(searchInput);
+        container.appendChild(icon);
+        container.appendChild(optionsList);
+        container.appendChild(selectElement); // Mover el select oculto dentro del container
+
+        // Poblar opciones
+        const options = Array.from(selectElement.options);
+        
+        function renderOptions(filterText = '') {
+            optionsList.innerHTML = '';
+            const filter = filterText.toLowerCase();
+            let matches = 0;
+
+            options.forEach((opt, index) => {
+                // Saltar el placeholder vacío si existe
+                if (opt.value === '' && index === 0) return;
+
+                const text = opt.text;
+                if (text.toLowerCase().includes(filter)) {
+                    matches++;
+                    const item = document.createElement('div');
+                    item.className = 'option-item';
+                    if (opt.selected) item.classList.add('selected');
+                    
+                    item.innerHTML = `
+                        <span>${text}</span>
+                        <i class="fas fa-check check-icon"></i>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        // Actualizar select original
+                        selectElement.value = opt.value;
+                        // Trigger change event para que otros scripts lo noten
+                        selectElement.dispatchEvent(new Event('change'));
+                        
+                        // Actualizar UI
+                        searchInput.value = text;
+                        optionsList.classList.remove('show');
+                        
+                        // Actualizar clases selected
+                        document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+                        item.classList.add('selected');
+                    });
+
+                    optionsList.appendChild(item);
+                }
+            });
+
+            if (matches === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'no-results';
+                noResults.textContent = 'No se encontraron proveedores';
+                optionsList.appendChild(noResults);
+            }
+        }
+
+        // Inicializar valor actual si hay uno seleccionado
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            searchInput.value = selectedOption.text;
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', (e) => {
+            renderOptions(e.target.value);
+            optionsList.classList.add('show');
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const filter = searchInput.value.toLowerCase();
+                const matches = options.filter((opt, index) => {
+                    if (opt.value === '' && index === 0) return false;
+                    return opt.text.toLowerCase().includes(filter);
+                });
+
+                if (matches.length > 0) {
+                    const bestMatch = matches[0];
+                    selectElement.value = bestMatch.value;
+                    selectElement.dispatchEvent(new Event('change'));
+                    searchInput.value = bestMatch.text;
+                    optionsList.classList.remove('show');
+                } else {
+                    alert('No se encontraron proveedores que coincidan con: ' + searchInput.value);
+                }
+            }
+        });
+
+        searchInput.addEventListener('focus', () => {
+            renderOptions(searchInput.value); // Re-render para mostrar todos si está vacío, o filtrados si hay texto
+            // Si el texto coincide exactamente con una opción, quizás queramos mostrar todas? 
+            // Mejor comportamiento: si clickeas, mostrar todas.
+            if (searchInput.value === selectedOption?.text) {
+                 renderOptions('');
+            } else {
+                 renderOptions(searchInput.value);
+            }
+            optionsList.classList.add('show');
+        });
+
+        // Cerrar al hacer click fuera
+        document.addEventListener('click', (e) => {
+            if (!container.contains(e.target)) {
+                optionsList.classList.remove('show');
+                
+                // Si el usuario escribió algo que no es una opción válida, revertir
+                const currentText = searchInput.value;
+                const match = options.find(opt => opt.text === currentText);
+                if (!match && selectElement.value) {
+                    // Revertir al nombre del seleccionado
+                    const currentSel = selectElement.options[selectElement.selectedIndex];
+                    searchInput.value = currentSel ? currentSel.text : '';
+                } else if (!match && !selectElement.value) {
+                    searchInput.value = '';
+                }
+            }
+        });
+        
+        // Abrir al hacer click en el input (incluso si ya tiene foco)
+        searchInput.addEventListener('click', () => {
+            optionsList.classList.add('show');
+             if (selectElement.selectedIndex > 0) {
+                 // Si ya hay algo seleccionado, mostrar todas las opciones para permitir cambiar
+                 renderOptions('');
+            } else {
+                renderOptions('');
+            }
+        });
+    }
+</script>
+
+
+// templates/facturas/crear_factura.html - Corrección del script
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('facturaForm');
+        const montoInput = document.getElementById('{{ form.monto.id_for_label }}');
+        const fechasContainer = document.getElementById('fechasContainer');
+        const btnAddFecha = document.getElementById('btnAddFecha');
+        const inputFechas = document.getElementById('id_fechas_pago');
+        const inputMontos = document.getElementById('id_montos_pago');
+        const distribucionIgual = document.getElementById('distribucionIgual');
+        const resumenMontos = document.getElementById('resumenMontos');
+        
+        let fechasData = [];
+        let montosData = [];
+        
+        // Función para formatear fecha a YYYY-MM-DD
+        function formatDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+            
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            
+            return [year, month, day].join('-');
+        }
+        
+        // Obtener fecha de mañana como valor por defecto
+        function getTomorrowDate() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return formatDate(tomorrow);
+        }
+        
+        // Inicializar con la fecha del contexto
+        const fechaInicial = "{{ fecha_str }}";
+        if (fechaInicial) {
+            agregarFecha(fechaInicial);
+        }
+        
+        // Función para agregar una nueva fecha
+        function agregarFecha(fechaValor = null) {
+            const fechaId = Date.now() + Math.random();
+            const fechaDefault = fechaValor || getTomorrowDate();
+            
+            const fechaDiv = document.createElement('div');
+            fechaDiv.className = 'fecha-pago-item';
+            fechaDiv.id = `fecha-${fechaId}`;
+            
+            fechaDiv.innerHTML = `
+                <div class="fecha-input">
+                    <label class="form-label">Fecha de Pago</label>
+                    <input type="date" 
+                           class="form-control fecha-input-field" 
+                           value="${fechaDefault}"
+                           min="2020-01-01"
+                           data-fecha-id="${fechaId}">
+                </div>
+                <div class="monto-input">
+                    <label class="form-label">Monto para esta fecha</label>
+                    <div class="currency-input">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" 
+                               class="form-control monto-input-field"
+                               placeholder="0.00"
+                               step="0.01"
+                               min="0.01"
+                               data-fecha-id="${fechaId}"
+                               value="0.00">
+                    </div>
+                </div>
+                <div class="fecha-actions">
+                    <button type="button" class="btn-fecha remove" data-action="remove" data-fecha-id="${fechaId}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            fechasContainer.appendChild(fechaDiv);
+            
+            // Configurar eventos para esta fecha
+            const fechaInput = fechaDiv.querySelector('.fecha-input-field');
+            const montoInputField = fechaDiv.querySelector('.monto-input-field');
+            
+            // Agregar a arrays de datos
+            fechasData.push({
+                id: fechaId,
+                fecha: fechaDefault
+            });
+            
+            montosData.push({
+                fechaId: fechaId,
+                monto: 0
+            });
+            
+            // Configurar eventos
+            fechaInput.addEventListener('change', function() {
+                const fechaId = this.getAttribute('data-fecha-id');
+                const index = fechasData.findIndex(f => f.id == fechaId);
+                if (index !== -1) {
+                    fechasData[index].fecha = this.value;
+                }
+                actualizarDatos();
+            });
+            
+            montoInputField.addEventListener('input', function() {
+                const fechaId = this.getAttribute('data-fecha-id');
+                const monto = parseFloat(this.value) || 0;
+                const index = montosData.findIndex(m => m.fechaId == fechaId);
+                if (index !== -1) {
+                    montosData[index].monto = monto;
+                }
+                actualizarDatos();
+            });
+            
+            montoInputField.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(2);
+                }
+                actualizarDatos();
+            });
+            
+            // Configurar botón de eliminar
+            const btnRemove = fechaDiv.querySelector('[data-action="remove"]');
+            btnRemove.addEventListener('click', function() {
+                const fechaId = this.getAttribute('data-fecha-id');
+                if (fechasData.length > 1) {
+                    fechaDiv.remove();
+                    fechasData = fechasData.filter(f => f.id != fechaId);
+                    montosData = montosData.filter(m => m.fechaId != fechaId);
+                    actualizarDatos();
+                } else {
+                    alert('Debe haber al menos una fecha de pago.');
+                }
+            });
+            
+            actualizarDatos();
+        }
+        
+        // Actualizar datos en inputs hidden
+        function actualizarDatos() {
+            // Actualizar fechas
+            const fechasActuales = [];
+            document.querySelectorAll('.fecha-input-field').forEach(input => {
+                if (input.value) {
+                    fechasActuales.push(input.value);
+                }
+            });
+            
+            // Si distribución igual está activada, distribuir monto
+            if (distribucionIgual.checked && montoInput.value) {
+                const montoTotal = parseFloat(montoInput.value) || 0;
+                const numFechas = fechasActuales.length;
+                
+                if (numFechas > 0) {
+                    const montoPorFecha = montoTotal / numFechas;
+                    
+                    // Actualizar inputs de monto visualmente
+                    document.querySelectorAll('.monto-input-field').forEach((input, index) => {
+                        const montoFormateado = montoPorFecha.toFixed(2);
+                        input.value = montoFormateado;
+                        
+                        // Actualizar montosData
+                        const fechaId = input.getAttribute('data-fecha-id');
+                        const dataIndex = montosData.findIndex(m => m.fechaId == fechaId);
+                        if (dataIndex !== -1) {
+                            montosData[dataIndex].monto = parseFloat(montoFormateado);
+                        }
+                    });
+                }
+            }
+            
+            // Actualizar montos
+            const montosActuales = [];
+            document.querySelectorAll('.monto-input-field').forEach(input => {
+                montosActuales.push(input.value || '0');
+            });
+            
+            inputFechas.value = fechasActuales.join(',');
+            inputMontos.value = montosActuales.join(',');
+            
+            // Actualizar resumen
+            actualizarResumen();
+        }
+        
+        // Actualizar resumen de montos
+        function actualizarResumen() {
+            const montoTotal = parseFloat(montoInput.value) || 0;
+            const totalDistribuido = montosData.reduce((sum, m) => sum + (m.monto || 0), 0);
+            const diferencia = montoTotal - totalDistribuido;
+            
+            document.getElementById('totalFactura').textContent = `$${montoTotal.toFixed(2)}`;
+            document.getElementById('totalDistribuido').textContent = `$${totalDistribuido.toFixed(2)}`;
+            
+            const diferenciaElement = document.getElementById('diferenciaMonto');
+            diferenciaElement.textContent = `Diferencia: $${diferencia.toFixed(2)}`;
+            
+            // Mostrar siempre el resumen
+            resumenMontos.style.display = 'block';
+            
+            // Cambiar color según la diferencia
+            if (Math.abs(diferencia) < 0.01) {
+                diferenciaElement.style.color = '#10b981';
+                diferenciaElement.innerHTML = `✓ Coincide: $${diferencia.toFixed(2)}`;
+            } else if (diferencia > 0) {
+                diferenciaElement.style.color = '#f59e0b';
+                diferenciaElement.innerHTML = `⚠ Falta distribuir: $${diferencia.toFixed(2)}`;
+            } else {
+                diferenciaElement.style.color = '#ef4444';
+                diferenciaElement.innerHTML = `✗ Exceso: $${Math.abs(diferencia).toFixed(2)}`;
+            }
+        }
+        
+        // Evento para agregar fecha
+        btnAddFecha.addEventListener('click', function() {
+            agregarFecha();
+        });
+        
+        // Evento para distribución igual
+        distribucionIgual.addEventListener('change', function() {
+            actualizarDatos();
+        });
+        
+        // Validar monto total al cambiar
+        montoInput.addEventListener('input', function() {
+            const originalValue = this.value;
+            const sanitizedValue = originalValue.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+            
+            if (originalValue !== sanitizedValue) {
+                this.value = sanitizedValue;
+            }
+            actualizarDatos();
+        });
+        
+        montoInput.addEventListener('blur', function() {
+            if (this.value) {
+                this.value = parseFloat(this.value).toFixed(2);
+            }
+            actualizarDatos();
+        });
+        
+        // Inicializar datos
+        actualizarDatos();
+        
+        // Mostrar indicador de carga al enviar
+        form.addEventListener('submit', function(e) {
+            const montoTotal = parseFloat(montoInput.value) || 0;
+            const totalDistribuido = montosData.reduce((sum, m) => sum + (m.monto || 0), 0);
+            const diferencia = Math.abs(montoTotal - totalDistribuido);
+            
+            
+            
+            const submitBtn = form.querySelector('.btn-submit');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,590 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Crear Usuario - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-user-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+
+    .form-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title i {
+        color: var(--accent-blue);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .required::after {
+        content: " *";
+        color: #ef4444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .error-message {
+        color: #f87171;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .password-strength {
+        margin-top: 0.5rem;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .strength-bar {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .strength-weak {
+        background: #ef4444;
+        width: 33%;
+    }
+
+    .strength-medium {
+        background: #f59e0b;
+        width: 66%;
+    }
+
+    .strength-strong {
+        background: #10b981;
+        width: 100%;
+    }
+
+    .password-hints {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: rgba(15, 23, 42, 0.3);
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .checkbox-group:hover {
+        background: rgba(59, 130, 246, 0.05);
+        border-color: var(--accent-blue);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 2px solid var(--border-color);
+        background: rgba(15, 23, 42, 0.5);
+        cursor: pointer;
+        accent-color: var(--accent-blue);
+    }
+
+    .checkbox-label {
+        flex: 1;
+        color: var(--text-light);
+        font-size: 0.95rem;
+        cursor: pointer;
+    }
+
+    .checkbox-description {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .admin-badges {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-staff {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .badge-superuser {
+        background: rgba(245, 158, 11, 0.1);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-submit {
+        flex: 1;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-cancel {
+        padding: 1rem 1.5rem;
+        background: rgba(30, 41, 59, 0.5);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    .success-message {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #bbf7d0;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .create-user-container {
+            padding: 0 0.5rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .form-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-user-container">
+    <div class="page-header">
+        <h1 class="page-title">Crear Nuevo Usuario</h1>
+        <p class="page-subtitle">Complete el formulario para registrar un nuevo usuario en el sistema</p>
+    </div>
+
+
+    <div class="form-card">
+        <form method="post" id="createUserForm" novalidate>
+            {% csrf_token %}
+            
+            <!-- Sección de Información Personal -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-user-circle"></i>
+                    Información Personal
+                </h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}" class="form-label required">
+                            Correo Electrónico
+                        </label>
+                        {{ form.email|add_class:"form-control"|attr:"placeholder:ejemplo@dominio.com" }}
+                        {% if form.email.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label required">
+                            Nombre(s)
+                        </label>
+                        {{ form.first_name|add_class:"form-control"|attr:"placeholder:Nombre del usuario" }}
+                        {% if form.first_name.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.first_name.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label required">
+                            Apellido(s)
+                        </label>
+                        {{ form.last_name|add_class:"form-control"|attr:"placeholder:Apellido del usuario" }}
+                        {% if form.last_name.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.last_name.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Contraseña -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-lock"></i>
+                    Seguridad y Contraseña
+                </h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label required">
+                            Contraseña
+                        </label>
+                        {{ form.password1|add_class:"form-control"|attr:"placeholder:••••••••"|attr:"id:password1" }}
+                        <div class="password-strength">
+                            <div class="strength-bar" id="passwordStrength"></div>
+                        </div>
+                        <div class="password-hints">
+                            La contraseña debe tener al menos 8 caracteres
+                        </div>
+                        {% if form.password1.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.password1.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label required">
+                            Confirmar Contraseña
+                        </label>
+                        {{ form.password2|add_class:"form-control"|attr:"placeholder:••••••••"|attr:"id:password2" }}
+                        <div id="passwordMatch" class="password-hints"></div>
+                        {% if form.password2.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.password2.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Permisos (Solo para administradores) -->
+            {% if user.is_superuser %}
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Permisos y Roles
+                </h3>
+                
+
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="is_superuser" name="is_superuser" value="true">
+                    <div>
+                        <label for="is_superuser" class="checkbox-label">
+                            Superusuario
+                        </label>
+                        <p class="checkbox-description">
+                            Tiene todos los permisos sin asignación explícita
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="admin-badges">
+                    <div class="badge badge-staff">
+                        <i class="fas fa-user-tie"></i> Staff
+                    </div>
+                    <div class="badge badge-superuser">
+                        <i class="fas fa-crown"></i> Superusuario
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Errores del formulario completo -->
+            {% if form.non_field_errors %}
+                <div class="error-message" style="margin-top: 1rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{ form.non_field_errors|join:", " }}
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{% url 'users-list' %}" class="btn-cancel">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-user-plus"></i>
+                    Crear Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const password1 = document.getElementById('password1');
+        const password2 = document.getElementById('password2');
+        const strengthBar = document.getElementById('passwordStrength');
+        const matchMessage = document.getElementById('passwordMatch');
+        
+        // Validación de fortaleza de contraseña
+        password1.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            // Longitud
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // Complejidad
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            // Actualizar barra de fortaleza
+            strengthBar.className = 'strength-bar';
+            if (strength <= 2) {
+                strengthBar.classList.add('strength-weak');
+            } else if (strength <= 4) {
+                strengthBar.classList.add('strength-medium');
+            } else {
+                strengthBar.classList.add('strength-strong');
+            }
+            
+            // Validar coincidencia
+            validatePasswordMatch();
+        });
+        
+        // Validar coincidencia de contraseñas
+        password2.addEventListener('input', validatePasswordMatch);
+        
+        function validatePasswordMatch() {
+            const p1 = password1.value;
+            const p2 = password2.value;
+            
+            if (!p1 || !p2) {
+                matchMessage.textContent = '';
+                matchMessage.style.color = '';
+                return;
+            }
+            
+            if (p1 === p2) {
+                matchMessage.innerHTML = '<i class="fas fa-check-circle"></i> Las contraseñas coinciden';
+                matchMessage.style.color = '#10b981';
+            } else {
+                matchMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Las contraseñas no coinciden';
+                matchMessage.style.color = '#ef4444';
+            }
+        }
+        
+        // Validación del formulario antes de enviar
+        document.getElementById('createUserForm').addEventListener('submit', function(e) {
+            if (password1.value !== password2.value) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden. Por favor, verifica.');
+                password2.focus();
+                return false;
+            }
+            
+            if (password1.value.length < 8) {
+                e.preventDefault();
+                alert('La contraseña debe tener al menos 8 caracteres.');
+                password1.focus();
+                return false;
+            }
+            
+            // Confirmación adicional para crear superusuarios
+            const isSuperuser = document.getElementById('is_superuser');
+            if (isSuperuser && isSuperuser.checked) {
+                if (!confirm('¿Está seguro de crear un Superusuario? Tendrá acceso completo al sistema.')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        // Mostrar/ocultar contraseñas
+        const togglePasswordButtons = `
+            <button type="button" class="toggle-password" style="
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: none;
+                border: none;
+                color: #64748b;
+                cursor: pointer;
+            ">
+                <i class="far fa-eye"></i>
+            </button>
+        `;
+        
+        // Agregar botones de mostrar/ocultar
+        [password1, password2].forEach(input => {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+            wrapper.insertAdjacentHTML('beforeend', togglePasswordButtons);
+            
+            const toggleBtn = wrapper.querySelector('.toggle-password');
+            toggleBtn.addEventListener('click', function() {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? 
+                    '<i class="far fa-eye"></i>' : 
+                    '<i class="far fa-eye-slash"></i>';
+            });
+        });
+    });
+</script>
+{% endblock %}

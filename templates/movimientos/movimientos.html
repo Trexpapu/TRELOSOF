@@ -1,0 +1,502 @@
+
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Movimientos - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Container Enhancements */
+    .movimientos-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    .alert {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+
+    /* Header Styling */
+    .view-header {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    /* Filters Section Redesign */
+    .filters-section {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+    }
+
+    .filters-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: flex-end;
+    }
+
+    .filters-grid > .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filters-grid > .filter-actions {
+        flex: 0 0 auto;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .form-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-left: 0.25rem;
+    }
+
+    .form-control {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        color: #f8fafc;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #60a5fa;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .image-select, select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+
+    /* Filter Actions */
+    .filter-actions {
+        display: flex;
+        gap: 0.75rem;
+        height: 48px; /* Align with inputs */
+    }
+
+    .btn-submit {
+        flex: 3;
+        min-width: 140px; /* Prevent squashing */
+        height: 52px; /* Fixed taller height */
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-clear {
+        flex: 1;
+        min-width: 60px; /* Prevent squashing */
+        height: 52px; /* Fixed taller height */
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-clear:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* Responsive Table Wrapper */
+    .table-container {
+        background: rgba(30, 41, 59, 0.4);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .movements-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 800px; /* Ensure table doesn't squash too much */
+    }
+
+    .movements-table th {
+        background: rgba(15, 23, 42, 0.8);
+        padding: 1.75rem 1.5rem; /* Increased vertical padding */
+        text-align: left;
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+    }
+
+    .movements-table td {
+        padding: 1.75rem 1.5rem; /* Increased vertical padding */
+        color: #f8fafc;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        vertical-align: middle;
+        transition: background-color 0.2s ease;
+    }
+
+    .movements-table tr:hover td {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    /* Badges */
+    .badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .badge-ingreso { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge-pago { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .badge-cargo { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+    /* Details & Amounts */
+    .detail-primary { font-weight: 600; color: #f8fafc; display: block; margin-bottom: 0.2rem; }
+    .detail-secondary { font-size: 0.85rem; color: #94a3b8; }
+    .amount { font-family: 'Monaco', 'Consolas', monospace; font-weight: 600; font-size: 1rem; color: #f8fafc; }
+
+    /* Action Buttons */
+    .action-group { display: flex; gap: 0.5rem; justify-content: center; }
+    
+    .btn-icon {
+        width: 36px; height: 36px; border-radius: 8px; /* Slightly larger */
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s ease; text-decoration: none;
+        color: #94a3b8; /* Neutral Gray Default */
+    }
+
+    /* User Requested Edit Style */
+    .btn-edit {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-blue);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-edit:hover {
+        background: rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Red Delete Style */
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    /* Mobile Enhancements */
+    @media (max-width: 1024px) {
+        .movimientos-container {
+            padding: 0 1rem;
+        }
+        
+        .filters-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .page-title {
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .view-header {
+            padding: 1.5rem;
+            justify-content: center;
+        }
+
+        .filters-section {
+            padding: 1.5rem;
+        }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .filter-actions {
+            margin-top: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        /* Card view for mobile tables if needed, or keep scroll */
+        .movements-table th, .movements-table td {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="movimientos-container">
+    <div class="view-header">
+        <h1 class="page-title">
+            <i class="fas fa-chart-line"></i> Movimientos Financieros
+        </h1>
+
+    
+    <!-- Filtros -->
+    <div class="filters-section">
+        <form method="get" class="filters-grid">
+            <div class="form-group">
+                <label class="form-label">Folio Factura</label>
+                <input type="text" name="folio" value="{{ filters.folio|default:'' }}" class="form-control" placeholder="Buscar por folio...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" value="{{ filters.fecha_inicio }}" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" name="fecha_fin" value="{{ filters.fecha_fin }}" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Origen</label>
+                <select name="origen" class="form-control">
+                    <option value="">Todos los orígenes</option>
+                    {% for codigo, nombre in origenes %}
+                        <option value="{{ codigo }}" {% if filters.origen == codigo %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Sucursal</label>
+                <select name="sucursal" class="form-control">
+                    <option value="">Todas las sucursales</option>
+                    {% for sucursal in sucursales %}
+                        <option value="{{ sucursal.id }}" {% if filters.sucursal == sucursal.id|stringformat:"i" %}selected{% endif %}>
+                            {{ sucursal.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-actions">
+                <a href="{% url 'lista-movimientos' %}" class="btn-filter btn-clear">
+                    <i class="fas fa-eraser"></i>
+                </a>
+                <button type="submit" class="btn-filter btn-submit">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="movements-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Origen</th>
+                        <th>Detalle</th>
+                        <th style="text-align: right;">Monto</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movimiento in movimientos %}
+                    <tr>
+                        <td style="white-space: nowrap;">
+                            <div class="detail-primary">{{ movimiento.fecha|date:"d M Y" }}</div>
+                            <span class="detail-secondary">{{ movimiento.fecha|date:"l" }}</span>
+                        </td>
+                        <td>
+                            {% if movimiento.origen == 'INGRESO' %}
+                                <span class="badge badge-ingreso"><i class="fas fa-arrow-down"></i> Ingreso</span>
+                            {% elif movimiento.origen == 'PAGO' %}
+                                <span class="badge badge-pago"><i class="fas fa-arrow-up"></i> Pago</span>
+                            {% elif movimiento.origen == 'AJUSTE_SUMA' %}
+                                <span class="badge badge-ingreso" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399;"><i class="fas fa-plus-circle"></i> Ajuste (+)</span>
+                            {% elif movimiento.origen == 'AJUSTE_RESTA' %}
+                                <span class="badge badge-cargo" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #f87171;"><i class="fas fa-minus-circle"></i> Ajuste (-)</span>
+                            {% elif movimiento.origen == 'MERCADO PAGO' %}
+                                <span class="badge badge-pago" style="background: rgba(13, 148, 136, 0.1); border-color: rgba(13, 148, 136, 0.3); color: #2dd4bf;"><i class="fas fa-credit-card"></i> Mercado Pago</span>
+                            {% else %}
+                                <span class="badge badge-cargo"><i class="fas fa-exclamation-circle"></i> {{ movimiento.get_origen_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if movimiento.factura %}
+                                <span class="detail-primary">
+                                    <i class="fas fa-file-invoice" style="color: var(--accent-purple);"></i> 
+                                    Factura #{{ movimiento.factura.folio }}
+                                    {% if movimiento.fecha_pago_instancia %}
+                                        <span style="font-size: 0.9em; opacity: 0.9;">
+                                            - Cuota {{ movimiento.fecha_pago_instancia.fecha_por_pagar|date:"d/m/Y" }}
+                                        </span>
+                                    {% endif %}
+                                </span>
+                                <span class="detail-secondary">{{ movimiento.descripcion|default:"" }}</span>
+                            {% elif movimiento.sucursal %}
+                                <span class="detail-primary">
+                                    <i class="fas fa-store" style="color: var(--accent-blue);"></i>
+                                    Sucursal {{ movimiento.sucursal.nombre }}
+                                </span>
+                                <span class="detail-secondary">{{ movimiento.descripcion|default:"" }}</span>
+                            {% else %}
+                                <span class="detail-primary">{{ movimiento.descripcion|default:"-" }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <span class="amount">${{ movimiento.monto|intcomma }}</span>
+                        </td>
+                        <td>
+                            <div class="action-group">
+                                <a href="{% url 'editar-pago-factura' movimiento.id %}" class="btn-icon btn-edit" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="javascript:void(0);" onclick="confirmarEliminacion('{% url 'eliminar-pago-factura' movimiento.id %}')" class="btn-icon btn-delete" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="fas fa-search empty-icon"></i>
+                                <h3>No se encontraron movimientos</h3>
+                                <p>Intenta ajustar los filtros de búsqueda</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmarEliminacion(url) {
+        if (confirm('¿Estás seguro de que deseas eliminar este pago? Esta acción no se puede deshacer.')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = '{{ csrf_token }}';
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

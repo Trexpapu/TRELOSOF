@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Cobros{% endblock %}
+
+{% block extra_css %}
+<style>
+    .historial-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent-blue); }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
+
+    /* ── Resumen suscripción ── */
+    .sub-status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(30,41,59,0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1.25rem 1.75rem;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .sub-status-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .status-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .dot-trial  { background: #34d399; box-shadow: 0 0 8px #34d39966; }
+    .dot-activa { background: #60a5fa; box-shadow: 0 0 8px #60a5fa66; }
+    .dot-vencida, .dot-cancelada { background: #f87171; box-shadow: 0 0 8px #f8717166; }
+
+    .sub-status-left h3 {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+    }
+    .sub-status-left p {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* ── Botón cobro manual ── */
+    .btn-cobrar {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        border: none;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-cobrar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16,185,129,0.35);
+    }
+
+    /* ── Tabla ── */
+    .table-card {
+        background: rgba(30,41,59,0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .table-header {
+        padding: 1.25rem 1.75rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    .table-header i { color: var(--accent-blue); }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead th {
+        background: rgba(15,23,42,0.5);
+        padding: 0.875rem 1.25rem;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid rgba(30,41,59,0.5);
+        transition: background 0.2s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(59,130,246,0.04); }
+
+    tbody td {
+        padding: 1rem 1.25rem;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .badge-exitoso   { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-fallido   { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-pendiente { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-reembolsado { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+
+    .monto-col { font-weight: 700; font-size: 1rem; }
+
+    .stripe-id {
+        font-family: 'Courier New', monospace;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    .empty-state p { color: var(--text-muted); font-size: 0.95rem; }
+
+    /* Confirmación cobro modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 3000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+        background: var(--secondary-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        max-width: 420px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .modal-icon {
+        width: 64px; height: 64px;
+        background: rgba(16,185,129,0.15);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem; color: #34d399;
+        margin: 0 auto 1.5rem;
+    }
+    .modal-box h3 { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .modal-box p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 2rem; }
+
+    .modal-actions { display: flex; gap: 1rem; }
+    .btn-modal-cancel {
+        flex: 1; padding: 0.875rem;
+        background: rgba(30,41,59,0.8);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px; cursor: pointer;
+        font-weight: 600; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-modal-cancel:hover { border-color: var(--accent-blue); }
+    .btn-modal-confirm {
+        flex: 1; padding: 0.875rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white; border: none; border-radius: 10px;
+        cursor: pointer; font-weight: 700; font-family: inherit;
+        transition: all 0.2s;
+    }
+    .btn-modal-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16,185,129,0.3); }
+
+    /* Alertas */
+    .alert-success {
+        background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);
+        color: #bbf7d0; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: .75rem;
+    }
+    .alert-error {
+        background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+        color: #f87171; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: .75rem;
+    }
+
+    @media (max-width: 768px) {
+        .historial-container { padding: 1rem; }
+        .sub-status-bar { flex-direction: column; align-items: flex-start; }
+        thead th:nth-child(4), tbody td:nth-child(4) { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="historial-container">
+
+    {% if suscripcion.estado == 'VENCIDA' or suscripcion.estado == 'CANCELADA' %}
+    <!-- ── Banner de cuenta bloqueada ── -->
+    <div style="
+        background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(185,28,28,0.1) 100%);
+        border: 1px solid rgba(239,68,68,0.4);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    ">
+        <div style="display:flex; align-items:center; gap:1.25rem;">
+            <div style="
+                width: 52px; height: 52px;
+                background: rgba(239,68,68,0.2);
+                border-radius: 14px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 1.5rem; color: #f87171; flex-shrink: 0;
+            ">
+                <i class="fas fa-lock"></i>
+            </div>
+            <div>
+                <div style="font-weight: 700; font-size: 1.05rem; color: #fca5a5; margin-bottom: 0.25rem;">
+                    Tu acceso está suspendido
+                </div>
+                <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+                    {% if suscripcion.estado == 'CANCELADA' %}
+                        Cancelaste tu suscripción. Para volver a usar el sistema, paga un mes ahora.
+                    {% else %}
+                        Tu suscripción venció. Paga un mes para reactivar el acceso de inmediato.
+                    {% endif %}
+                    {% if suscripcion.tiene_metodo_pago %}
+                        <span style="display:block; margin-top:0.3rem;">
+                            Tarjeta guardada: <strong>{{ suscripcion.card_brand|default:"tarjeta"|capfirst }} ****{{ suscripcion.card_last4 }}</strong>
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Botones de acción -->
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap; flex-shrink:0;">
+            {% if suscripcion.tiene_metodo_pago %}
+            <button class="btn-cobrar" onclick="abrirModalCobro()">
+                <i class="fas fa-bolt"></i> Pagar y Reactivar
+            </button>
+            {% endif %}
+            <!-- Siempre disponible: cambiar a otra tarjeta -->
+            <a href="{% url 'suscripcion-metodo-pago' %}" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.25rem;
+                background: rgba(255,255,255,0.06);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 10px;
+                color: var(--text-light);
+                font-weight: 600;
+                font-size: 0.9rem;
+                text-decoration: none;
+                transition: all 0.2s;
+            " onmouseover="this.style.borderColor='rgba(96,165,250,0.5)'"
+               onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+                <i class="fas fa-credit-card"></i>
+                {% if suscripcion.tiene_metodo_pago %}Usar otra tarjeta{% else %}Agregar tarjeta{% endif %}
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <a href="{% url 'configuracion-index' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Volver a Configuración
+    </a>
+    {% endif %}
+
+    <h1 class="page-title">Historial de Cobros</h1>
+    <p class="page-subtitle">Registro de todos los pagos de tu suscripción.</p>
+
+
+    <!-- ── Barra de estado ── -->
+    {% if suscripcion %}
+    <div class="sub-status-bar">
+        <div class="sub-status-left">
+            <span class="status-dot dot-{{ suscripcion.estado|lower }}"></span>
+            <div>
+                <h3>{{ suscripcion.get_estado_display }}</h3>
+                <p>
+                    ${{ suscripcion.precio_mensual|floatformat:2 }} MXN/mes
+                    {% if suscripcion.card_last4 %}· Tarjeta ****{{ suscripcion.card_last4 }}{% endif %}
+                    {% if suscripcion.proximo_cobro %}· Próximo cobro automático: {{ suscripcion.proximo_cobro|date:"d/m/Y" }}{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+            <!-- Badge de meses anticipados -->
+            {% if suscripcion.meses_anticipados > 0 %}
+            <div style="
+                background: rgba(16,185,129,0.15);
+                border: 1px solid rgba(16,185,129,0.4);
+                border-radius: 10px;
+                padding: 0.625rem 1.1rem;
+                display: flex; align-items: center; gap: 0.6rem;
+                font-weight: 700;
+            ">
+                <i class="fas fa-coins" style="color: #34d399; font-size: 1.1rem;"></i>
+                <div>
+                    <div style="color: #34d399; font-size: 0.95rem;">
+                        {{ suscripcion.meses_anticipados }} mes(es) de anticipo
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">
+                        {{ suscripcion.dias_cubiertos }} días cubiertos — no se cobrará hasta {{ suscripcion.proximo_cobro|date:"d/m/Y" }}
+                    </div>
+                </div>
+            </div>
+            {% elif suscripcion.tiene_metodo_pago %}
+            <div style="color: var(--text-muted); font-size:0.85rem;">
+                Sin anticipo — el cobro se realiza automáticamente cada mes.
+            </div>
+            {% endif %}
+
+            <!-- Botón cobrar -->
+            {% if suscripcion.activa and suscripcion.tiene_metodo_pago %}
+            <button class="btn-cobrar" onclick="abrirModalCobro()">
+                <i class="fas fa-bolt"></i>
+                Pagar Mes Adelantado
+            </button>
+            {% elif not suscripcion.tiene_metodo_pago %}
+            <a href="{% url 'suscripcion-metodo-pago' %}" class="btn-cobrar" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <i class="fas fa-credit-card"></i>
+                Agregar Tarjeta Primero
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Tabla de cobros ── -->
+    <div class="table-card">
+        <div class="table-header">
+            <i class="fas fa-receipt"></i>
+            Transacciones
+            <span style="margin-left: auto; font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">
+                {{ cobros|length }} registro{% if cobros|length != 1 %}s{% endif %}
+            </span>
+        </div>
+
+        {% if cobros %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>ID Stripe</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cobro in cobros %}
+                <tr>
+                    <td>{{ cobro.fecha|date:"d/m/Y H:i" }}</td>
+                    <td class="monto-col">${{ cobro.monto|floatformat:2 }} MXN</td>
+                    <td>
+                        <span class="badge badge-{{ cobro.resultado|lower }}">
+                            {% if cobro.resultado == 'EXITOSO' %}<i class="fas fa-check-circle"></i>
+                            {% elif cobro.resultado == 'FALLIDO' %}<i class="fas fa-times-circle"></i>
+                            {% elif cobro.resultado == 'PENDIENTE' %}<i class="fas fa-clock"></i>
+                            {% else %}<i class="fas fa-undo"></i>{% endif %}
+                            {{ cobro.get_resultado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if cobro.stripe_charge_id %}
+                            <span class="stripe-id" title="{{ cobro.stripe_charge_id }}">{{ cobro.stripe_charge_id }}</span>
+                        {% else %}
+                            <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ cobro.descripcion|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🧾</div>
+            <p>Aún no hay cobros registrados.<br>
+               Aquí aparecerán todas tus transacciones.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ── Modal: Confirmar cobro manual ── -->
+<div class="modal-overlay" id="modalCobro">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fas fa-bolt"></i></div>
+        <h3>Confirmar Cobro</h3>
+        <p>
+            Se realizará un cargo de <strong>${{ suscripcion.precio_mensual|floatformat:2 }} MXN</strong>
+            a tu tarjeta {% if suscripcion.card_last4 %}terminada en <strong>{{ suscripcion.card_last4 }}</strong>{% endif %} ahora mismo.
+        </p>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="cerrarModalCobro()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <form method="POST" action="{% url 'suscripcion-cobrar-manual' %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn-modal-confirm" style="width:100%;">
+                    <i class="fas fa-bolt"></i> Cobrar Ahora
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function abrirModalCobro() {
+        document.getElementById('modalCobro').classList.add('active');
+    }
+    function cerrarModalCobro() {
+        document.getElementById('modalCobro').classList.remove('active');
+    }
+    document.getElementById('modalCobro').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModalCobro();
+    });
+</script>
+{% endblock %}

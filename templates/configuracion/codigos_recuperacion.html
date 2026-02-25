@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Códigos de Recuperación 2FA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backup-container { max-width: 720px; margin: 0 auto; }
+
+    .backup-header {
+        display: flex; align-items: center; gap: 1.25rem;
+        margin-bottom: 1.75rem;
+    }
+    .backup-icon {
+        width: 56px; height: 56px;
+        background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(234,88,12,0.15));
+        border: 1px solid rgba(245,158,11,0.4);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; color: #fbbf24; flex-shrink: 0;
+    }
+    .backup-header h1 { font-size: 1.5rem; color: var(--text-light); margin: 0; }
+    .backup-header p  { color: var(--text-muted); margin: 0.25rem 0 0; font-size: 0.9rem;}
+
+    /* Alerta de instrucciones */
+    .info-banner {
+        background: rgba(245,158,11,0.08);
+        border: 1px solid rgba(245,158,11,0.3);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        display: flex; gap: 1rem; align-items: flex-start;
+        margin-bottom: 2rem;
+        font-size: 0.9rem; color: #fbbf24; line-height: 1.6;
+    }
+    .info-banner i { flex-shrink:0; margin-top:2px; }
+
+    /* Estadísticas */
+    .stats-row {
+        display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;
+    }
+    .stat-pill {
+        padding: 0.5rem 1.25rem;
+        border-radius: 999px;
+        font-size: 0.85rem; font-weight: 600;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .stat-pill.disponibles {
+        background: rgba(16,185,129,0.12);
+        border: 1px solid rgba(16,185,129,0.3);
+        color: #34d399;
+    }
+    .stat-pill.usados {
+        background: rgba(100,116,139,0.15);
+        border: 1px solid rgba(100,116,139,0.2);
+        color: #94a3b8;
+    }
+
+    /* Grid de códigos */
+    .codes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+    }
+    .code-chip {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        color: var(--text-light);
+        transition: all 0.2s;
+        position: relative;
+        cursor: pointer;
+    }
+    .code-chip:not(.usado):hover {
+        border-color: rgba(245,158,11,0.5);
+        background: rgba(245,158,11,0.06);
+        color: #fbbf24;
+    }
+    .code-chip.usado {
+        opacity: 0.35;
+        text-decoration: line-through;
+        cursor: default;
+        border-style: dashed;
+    }
+    .code-chip.usado::after {
+        content: 'USADO';
+        display: block;
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        color: #64748b;
+        margin-top: 0.25rem;
+        text-decoration: none;
+    }
+    .copy-hint {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        display: block;
+        margin-top: 0.25rem;
+        font-family: inherit;
+        font-weight: 400;
+        letter-spacing: 0;
+    }
+
+    /* Acciones */
+    .actions-row {
+        display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    .btn-regen {
+        background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(234,88,12,0.15));
+        border: 1px solid rgba(245,158,11,0.4);
+        color: #fbbf24;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 700; font-size: 0.95rem;
+        cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-regen:hover {
+        background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(234,88,12,0.25));
+        transform: translateY(-1px);
+    }
+    .btn-copy-all {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600; font-size: 0.9rem;
+        cursor: pointer; transition: all 0.2s;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-copy-all:hover {
+        border-color: rgba(255,255,255,0.25);
+        color: var(--text-light);
+    }
+    .back-link {
+        color: var(--text-muted); font-size: 0.9rem;
+        text-decoration: none; display: flex; align-items: center; gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .back-link:hover { color: var(--text-light); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="backup-container">
+    <a href="{% url 'configuracion-index' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Volver a Configuración
+    </a>
+
+    <div class="backup-header">
+        <div class="backup-icon"><i class="fas fa-key"></i></div>
+        <div>
+            <h1>Códigos de Recuperación</h1>
+            <p>Úsalos para acceder si pierdes tu teléfono con Authy. Cada código es de un solo uso.</p>
+        </div>
+    </div>
+
+    <!-- Instrucciones -->
+    <div class="info-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Guárdalos en un lugar seguro.</strong>
+            Anótalos en papel, guárdalos en un gestor de contraseñas o imprímelos.
+            Cada código solo puede usarse <strong>una vez</strong>.
+            Si los gastas todos, usa el botón "Regenerar" para obtener 10 nuevos (los anteriores se invalidan).
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-row">
+        <span class="stat-pill disponibles">
+            <i class="fas fa-check-circle"></i>
+            {{ disponibles }} disponibles
+        </span>
+        {% with usados=codigos.count|add:"-"|add:disponibles %}
+        <span class="stat-pill usados">
+            <i class="fas fa-times-circle"></i>
+            {{ codigos.count|add:disponibles|add:"-10"|add:"0" }} usados
+        </span>
+        {% endwith %}
+    </div>
+
+    <!-- Grid de códigos -->
+    <div class="codes-grid" id="codesGrid">
+        {% for codigo in codigos %}
+        <div class="code-chip {% if codigo.used %}usado{% endif %}"
+             {% if not codigo.used %}onclick="copiarCodigo('{{ codigo.code }}', this)"{% endif %}
+             title="{% if not codigo.used %}Clic para copiar{% else %}Ya usado{% endif %}">
+            {{ codigo.code }}
+            {% if not codigo.used %}
+            <span class="copy-hint">clic para copiar</span>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:2rem;">
+            <i class="fas fa-exclamation-circle" style="font-size:1.5rem; margin-bottom:.5rem; display:block;"></i>
+            No tienes códigos de recuperación.<br>Usa el botón "Regenerar" para crearlos.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions-row">
+        <button class="btn-copy-all" onclick="copiarTodos()">
+            <i class="fas fa-copy"></i> Copiar todos
+        </button>
+        <form method="POST" action="{% url 'regenerar-codigos' %}" id="regenForm">
+            {% csrf_token %}
+            <button type="button" class="btn-regen" onclick="confirmarRegen()">
+                <i class="fas fa-redo"></i> Regenerar códigos
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copiarCodigo(code, el) {
+        navigator.clipboard.writeText(code).then(() => {
+            const orig = el.querySelector('.copy-hint');
+            if (orig) {
+                orig.textContent = '✅ copiado';
+                setTimeout(() => orig.textContent = 'clic para copiar', 1500);
+            }
+        });
+    }
+
+    function copiarTodos() {
+        const chips = document.querySelectorAll('.code-chip:not(.usado)');
+        const codes = Array.from(chips).map(c => c.textContent.trim().split('\n')[0].trim());
+        navigator.clipboard.writeText(codes.join('\n')).then(() => {
+            const btn = document.querySelector('.btn-copy-all');
+            btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiados!';
+            setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i> Copiar todos', 2000);
+        });
+    }
+
+    function confirmarRegen() {
+        if (confirm('⚠️ ¿Estás seguro? Todos tus códigos actuales se invalidarán y se generarán 10 nuevos.')) {
+            document.getElementById('regenForm').submit();
+        }
+    }
+</script>
+{% endblock %}

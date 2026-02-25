@@ -1,0 +1,480 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Reporte de Facturas - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos Glassmorphism reutilizados */
+    .report-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .report-header {
+        background: rgba(15, 23, 42, 0.8);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: rgba(30, 41, 59, 0.7);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        background: rgba(30, 41, 59, 0.9);
+    }
+
+    .kpi-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+
+    .kpi-content {
+        flex: 1;
+    }
+
+    .kpi-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #f8fafc;
+    }
+
+    .kpi-label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+
+    /* Gráficas */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1024px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-container {
+        background: rgba(30, 41, 59, 0.7);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        min-height: 400px;
+    }
+
+    /* Tabla */
+    .table-container {
+        background: rgba(30, 41, 59, 0.7);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .data-table th {
+        background: rgba(15, 23, 42, 0.8);
+        padding: 1rem;
+        text-align: left;
+        color: #94a3b8;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #e2e8f0;
+    }
+
+    .data-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Filtros */
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .form-control {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        color: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #8b5cf6;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 46px; /* Match input height */
+    }
+
+    .btn-update:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-pendiente {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-pagado {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-abonado {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="report-header">
+        <h1 style="color: #f8fafc; font-size: 1.8rem; margin: 0;">
+            <i class="fas fa-file-invoice-dollar" style="color: #8b5cf6; margin-right: 0.5rem;"></i>
+            Reporte de Facturas y Pagos
+        </h1>
+        
+        <form method="POST" class="filter-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Proveedor</label>
+                <select name="proveedor" class="form-control">
+                    <option value="">Todos los Proveedores</option>
+                    {% for p in proveedores %}
+                    <option value="{{ p.id }}" {% if proveedor_id == p.id %}selected{% endif %}>{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-control">
+                    <option value="">Todos los Estados</option>
+                    {% for val, label in estados %}
+                    <option value="{{ val }}" {% if estado_actual == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn-update">
+                <i class="fas fa-sync-alt margin-right-2"></i> Actualizar
+            </button>
+        </form>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+                <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">${{ total_deuda|floatformat:2|intcomma }}</div>
+                <div class="kpi-label">Deuda Total Programada</div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">${{ total_programado|floatformat:2|intcomma }}</div>
+                <div class="kpi-label">Total en Fechas de Pago</div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">{{ chart_estado_montos|length }}</div>
+                <div class="kpi-label">Estados Encontrados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Deuda por Proveedor (Top 10)</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="proveedoresChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Cronograma de Pagos</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Distribución por Estado (Cantidad)</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="estadoChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Distribución por Estado (Monto)</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="estadoMontoChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Detalles -->
+    <div class="table-container">
+        <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Próximos Pagos (Detalle)</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fecha Pago</th>
+                    <th>Proveedor</th>
+                    <th>Folio</th>
+                    <th>Estado</th>
+                    <th>Monto Programado</th>
+                    <th>Total Factura</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in detalles %}
+                <tr>
+                    <td style="color: #94a3b8;">{{ item.fecha_por_pagar|date:"d M Y" }}</td>
+                    <td style="font-weight: 600;">{{ item.factura.proveedor.nombre }}</td>
+                    <td>{{ item.factura.folio|default:"--" }}</td>
+                    <td>
+                        <span class="status-badge status-{{ item.factura.estado|lower }}">
+                            {{ item.factura.get_estado_display }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 700;">${{ item.monto_por_pagar|floatformat:2|intcomma }}</td>
+                    <td>${{ item.factura.monto|floatformat:2|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">
+                        No se encontraron pagos programados en este rango.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: '#94a3b8' }
+            }
+        },
+        scales: {
+            y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#94a3b8' }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#94a3b8' }
+            }
+        }
+    };
+
+    // 1. Proveedores Chart (Bar)
+    new Chart(document.getElementById('proveedoresChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_proveedor_labels|safe }},
+            datasets: [{
+                label: 'Monto por Pagar',
+                data: {{ chart_proveedor_data|safe }},
+                backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                borderColor: '#8b5cf6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: commonOptions
+    });
+
+    // 2. Timeline Chart (Line)
+    new Chart(document.getElementById('timelineChart'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_timeline_labels|safe }},
+            datasets: [{
+                label: 'Pagos Programados',
+                data: {{ chart_timeline_data|safe }},
+                borderColor: '#f43f5e',
+                backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: commonOptions
+    });
+
+    // 3. Estado Chart (Pie) - Cantidad
+    new Chart(document.getElementById('estadoChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_estado_labels|safe }},
+            datasets: [{
+                data: {{ chart_estado_data|safe }},
+                backgroundColor: [
+                    'rgba(245, 158, 11, 0.6)', // Pendiente (Orange)
+                    'rgba(16, 185, 129, 0.6)', // Pagado (Green)
+                    'rgba(59, 130, 246, 0.6)'  // Abonado (Blue)
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#94a3b8' } }
+            }
+        }
+    });
+
+    // 4. Estado Chart (Pie) - Monto
+    new Chart(document.getElementById('estadoMontoChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_estado_labels|safe }},
+            datasets: [{
+                data: {{ chart_estado_montos|safe }},
+                backgroundColor: [
+                    'rgba(245, 158, 11, 0.6)', // Pendiente
+                    'rgba(16, 185, 129, 0.6)', // Pagado
+                    'rgba(59, 130, 246, 0.6)'  // Abonado
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#94a3b8' } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.raw;
+                            return context.label + ': $' + value.toLocaleString('en-US', {minimumFractionDigits: 2});
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

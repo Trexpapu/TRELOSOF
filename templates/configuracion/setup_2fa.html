@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Activar Seguridad 2FA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .twofa-container {
+        max-width: 680px;
+        margin: 0 auto;
+    }
+    .twofa-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 1.25rem;
+        padding: 2.5rem;
+    }
+    .twofa-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    .twofa-icon {
+        width: 56px; height: 56px;
+        background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(168,85,247,0.2));
+        border: 1px solid rgba(99,102,241,0.4);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; color: #a78bfa;
+        flex-shrink: 0;
+    }
+    .twofa-header h1 { font-size: 1.5rem; color: var(--text-light); margin: 0; }
+    .twofa-header p  { color: var(--text-muted); margin: 0.25rem 0 0; font-size: 0.9rem; }
+
+    .step-list {
+        list-style: none; padding: 0; margin: 0 0 2rem;
+        display: flex; flex-direction: column; gap: 1rem;
+    }
+    .step-list li {
+        display: flex; align-items: flex-start; gap: 1rem;
+    }
+    .step-num {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: rgba(99,102,241,0.2);
+        border: 1px solid rgba(99,102,241,0.4);
+        color: #a78bfa;
+        font-weight: 700; font-size: 0.85rem;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; margin-top: 2px;
+    }
+    .step-text { color: var(--text-color); font-size: 0.95rem; line-height: 1.5; }
+    .step-text strong { color: var(--text-light); }
+    .step-text a { color: #a78bfa; text-decoration: none; }
+    .step-text a:hover { text-decoration: underline; }
+
+    .qr-wrapper {
+        display: flex; justify-content: center;
+        margin: 1.5rem 0;
+    }
+    .qr-wrapper img {
+        width: 200px; height: 200px;
+        border-radius: 12px;
+        border: 3px solid rgba(99,102,241,0.4);
+        padding: 8px;
+        background: #fff;
+    }
+
+    .manual-key {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.9rem 1.25rem;
+        font-family: monospace;
+        font-size: 0.95rem;
+        color: #a78bfa;
+        letter-spacing: 0.1em;
+        text-align: center;
+        word-break: break-all;
+        margin-bottom: 2rem;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .manual-key:hover { border-color: rgba(99,102,241,0.5); }
+
+    .divider { border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; }
+
+    .token-group { display: flex; gap: 0.75rem; }
+    .token-input {
+        flex: 1;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.85rem 1.25rem;
+        color: var(--text-light);
+        font-size: 1.5rem;
+        font-family: monospace;
+        letter-spacing: 0.4em;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .token-input:focus { border-color: rgba(99,102,241,0.6); }
+    .btn-activate {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: #fff; border: none; border-radius: 10px;
+        padding: 0 2rem;
+        font-size: 1rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .btn-activate:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-cancel {
+        display: block; text-align: center;
+        color: var(--text-muted); font-size: 0.9rem; margin-top: 1.25rem;
+        text-decoration: none;
+    }
+    .btn-cancel:hover { color: var(--text-light); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="twofa-container">
+    <div class="twofa-card">
+        <div class="twofa-header">
+            <div class="twofa-icon"><i class="fas fa-shield-alt"></i></div>
+            <div>
+                <h1>Activar Seguridad 2FA</h1>
+                <p>Vincula tu cuenta con Authy para protegerla con autenticación en dos pasos.</p>
+            </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <ol class="step-list">
+            <li>
+                <div class="step-num">1</div>
+                <div class="step-text">
+                    <strong>Descarga Authy</strong> en tu teléfono:<br>
+                    <a href="https://apps.apple.com/app/authy/id494168017" target="_blank">App Store (iPhone)</a> ·
+                    <a href="https://play.google.com/store/apps/details?id=com.authy.authy" target="_blank">Google Play (Android)</a>
+                </div>
+            </li>
+            <li>
+                <div class="step-num">2</div>
+                <div class="step-text">
+                    <strong>Escanea el código QR</strong> con Authy. Si no puedes escanearlo,
+                    copia la clave manual de abajo.
+                </div>
+            </li>
+            <li>
+                <div class="step-num">3</div>
+                <div class="step-text">
+                    <strong>Ingresa el código de 6 dígitos</strong> que genera Authy para confirmar
+                    la vinculación.
+                </div>
+            </li>
+        </ol>
+
+        <!-- QR Code -->
+        <div class="qr-wrapper">
+            <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR Code 2FA">
+        </div>
+
+        <!-- Clave manual -->
+        <p style="color:var(--text-muted); font-size:0.85rem; text-align:center; margin-bottom:0.5rem;">
+            ¿No puedes escanear el QR? Haz clic en la clave para copiarla:
+        </p>
+        <div class="manual-key" id="manualKey" onclick="copyKey()" title="Clic para copiar">
+            {{ secret }}
+        </div>
+
+        <hr class="divider">
+
+        <!-- Formulario de confirmación -->
+        <p style="color:var(--text-light); font-weight:600; margin-bottom:1rem;">
+            <i class="fas fa-key" style="color:#a78bfa;"></i>
+            Confirma con el código de Authy
+        </p>
+        <form method="POST" action="{% url 'confirmar-2fa' %}">
+            {% csrf_token %}
+            <div class="token-group">
+                <input type="text" name="token" id="token" class="token-input"
+                       maxlength="6" minlength="6" pattern="\d{6}"
+                       placeholder="000000" autocomplete="one-time-code"
+                       autofocus required>
+                <button type="submit" class="btn-activate">Activar</button>
+            </div>
+        </form>
+
+        <a href="{% url 'configuracion-index' %}" class="btn-cancel">
+            <i class="fas fa-times"></i> Cancelar y volver a Configuración
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyKey() {
+        const key = document.getElementById('manualKey').innerText.trim();
+        navigator.clipboard.writeText(key).then(() => {
+            document.getElementById('manualKey').innerText = '✅ ¡Copiado!';
+            setTimeout(() => { document.getElementById('manualKey').innerText = key; }, 1500);
+        });
+    }
+    // Auto-submit al completar 6 dígitos
+    document.getElementById('token').addEventListener('input', function() {
+        if (this.value.length === 6) this.closest('form').requestSubmit();
+    });
+</script>
+{% endblock %}

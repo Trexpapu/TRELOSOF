@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Venta - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para el formulario de ventas */
+    .header-section {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
+        z-index: 0;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-title i {
+        font-size: 2.2rem;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Contenedor del formulario */
+    .form-container {
+        background: var(--card-bg);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 3rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Estilos del formulario */
+    .form-group {
+        margin-bottom: 2rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: var(--text-light);
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        color: var(--text-light);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* Estilos para select */
+    select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1.25rem center;
+        background-size: 1.5rem;
+        padding-right: 3.5rem;
+    }
+
+    /* Estilos para fecha */
+    input[type="date"].form-control {
+        color-scheme: dark;
+    }
+
+    /* Botones */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1.5rem;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        padding: 1rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-3px);
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+    }
+
+    /* Mensajes de error */
+    .error-message {
+        color: #fca5a5;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .error-message i {
+        font-size: 1rem;
+    }
+
+    /* Alertas */
+    .alert {
+        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        border: 1px solid;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .alert-success {
+        background: rgba(16, 185, 129, 0.12);
+        color: #34d399;
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.12);
+        color: #f87171;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Diseño responsivo */
+    @media (max-width: 768px) {
+        .header-section {
+            padding: 1.5rem;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .form-container {
+            padding: 1.5rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Animación de carga */
+    .btn-primary:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Estilo para grupos de campo con iconos */
+    .field-with-icon {
+        position: relative;
+    }
+
+    .field-icon {
+        position: absolute;
+        right: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h1 class="page-title">
+        <i class="fas fa-cash-register"></i> Registrar Venta
+    </h1>
+</div>
+
+
+<div class="form-container">
+    <form method="post" id="ventaForm">
+        {% csrf_token %}
+        <input type="hidden" name="next_url" value="{{ next_url }}">
+        
+        <div class="form-group">
+            <label for="id_fecha" class="form-label">
+                <i class="fas fa-calendar-alt"></i> Fecha
+            </label>
+            <input type="date" 
+                   name="fecha" 
+                   id="id_fecha" 
+                   class="form-control"
+                   value="{{ form.fecha.value|default:'' }}"
+                   required>
+            {% if form.fecha.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ form.fecha.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_monto" class="form-label">
+                <i class="fas fa-money-bill-wave"></i> Monto
+            </label>
+            <input type="number" 
+                   name="monto" 
+                   id="id_monto" 
+                   class="form-control"
+                   value="{{ form.monto.value|default:'' }}"
+                   step="0.01"
+                   min="0.01"
+                   placeholder="0.00"
+                   required>
+            {% if form.monto.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ form.monto.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_sucursal" class="form-label">
+                <i class="fas fa-store"></i> Sucursal
+            </label>
+            <select name="sucursal" 
+                    id="id_sucursal" 
+                    class="form-control" 
+                    required>
+                <option value="">Selecciona una sucursal</option>
+                {% for sucursal in form.sucursal.field.queryset %}
+                    <option value="{{ sucursal.id }}"
+                            {% if form.sucursal.value == sucursal.id|stringformat:"s" %}selected{% endif %}>
+                        {{ sucursal.nombre }} - {{ sucursal.direccion }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if form.sucursal.errors %}
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ form.sucursal.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-actions">
+            <a href="{{ next_url }}" class="btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Guardar Venta
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar campos del formulario
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener la fecha de hoy para el campo de fecha si no está ya establecida
+        const fechaInput = document.getElementById('id_fecha');
+        if (fechaInput && !fechaInput.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            fechaInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        
+        // Validación en tiempo real del monto
+        const montoInput = document.getElementById('id_monto');
+        if (montoInput) {
+            montoInput.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                const errorSpan = this.nextElementSibling;
+                
+                if (value <= 0) {
+                    if (!errorSpan || !errorSpan.classList.contains('error-message')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> El monto debe ser mayor a cero.';
+                        this.parentNode.appendChild(errorDiv);
+                    }
+                } else if (errorSpan && errorSpan.classList.contains('error-message')) {
+                    errorSpan.remove();
+                }
+            });
+        }
+        
+        // Manejar el envío del formulario
+        const form = document.getElementById('ventaForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                }
+            });
+        }
+        
+        // Formatear monto al perder el foco
+        if (montoInput) {
+            montoInput.addEventListener('blur', function() {
+                if (this.value) {
+                    const value = parseFloat(this.value);
+                    if (!isNaN(value)) {
+                        this.value = value.toFixed(2);
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

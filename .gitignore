@@ -1,0 +1,25 @@
+# Entornos virtuales
+venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Base de datos local
+db.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+
+# Archivos generados por Django
+staticfiles/
+media/
+
+# Docker logs
+*.log
+
+# Mac OS files
+.DS_Store

@@ -1,0 +1,645 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Users List Styles */
+    .users-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .page-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-org {
+        background: linear-gradient(135deg, var(--accent-purple) 0%, #7c3aed 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-org:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-secondary {
+        background: rgba(30, 41, 59, 0.8);
+        color: var(--text-light);
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.users {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+    }
+    .stat-icon.users.full {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+
+    .stat-icon.org {
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.1;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* Progress bar de usuarios */
+    .user-quota-bar {
+        width: 100%;
+        height: 6px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 999px;
+        margin-top: 0.6rem;
+        overflow: hidden;
+    }
+    .user-quota-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.4s ease;
+    }
+    .user-quota-fill.ok   { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+    .user-quota-fill.warn { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+    /* Banner de límite alcanzado */
+    .limit-banner {
+        background: rgba(245,158,11,0.08);
+        border: 1px solid rgba(245,158,11,0.3);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        font-size: 0.9rem;
+    }
+    .limit-banner i { color: #fbbf24; margin-top: 2px; flex-shrink: 0; }
+    .limit-banner strong { color: #fde68a; }
+    .limit-banner p { color: #d97706; margin: 0.25rem 0 0; font-size: 0.82rem; }
+
+    /* Botón deshabilitado */
+    .btn-primary.disabled {
+        background: rgba(100,116,139,0.3);
+        color: #64748b;
+        cursor: not-allowed;
+        pointer-events: none;
+        box-shadow: none;
+    }
+
+    /* Search and Filters */
+    .filter-container {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        color: var(--text-light);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .filter-input {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Users Table */
+    .users-table-container {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table thead {
+        background: rgba(15, 23, 42, 0.9);
+    }
+
+    .users-table th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .users-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-light);
+    }
+
+    .users-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .users-table tbody tr:hover {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .users-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* User Avatar */
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-blue) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .user-name {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-info h4 {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .user-email {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Role Badges */
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-admin {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .badge-user {
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    .success-message {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #bbf7d0;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .users-container {
+            padding: 1rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .page-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .users-table {
+            display: block;
+            overflow-x: auto;
+        }
+
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="users-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Gestión de Usuarios</h1>
+            <p class="page-subtitle">
+                Organización: <strong>{{ organizacion.nombre }}</strong>
+            </p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'editar-organizacion' %}" class="btn-org">
+                <i class="fas fa-building"></i>
+                Editar Organización
+            </a>
+            {% if limite_alcanzado %}
+            <span class="btn-primary disabled" title="Límite de {{ limite_usuarios }} usuarios alcanzado">
+                <i class="fas fa-lock"></i>
+                Límite alcanzado
+            </span>
+            {% else %}
+            <a href="{% url 'user-create' %}" class="btn-primary">
+                <i class="fas fa-user-plus"></i>
+                Nuevo Usuario
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Banner: límite alcanzado -->
+    {% if limite_alcanzado %}
+    <div class="limit-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Límite de plan alcanzado — {{ total_users }}/{{ limite_usuarios }} usuarios</strong>
+            <p>Tu plan actual permite hasta <strong>{{ limite_usuarios }} usuarios</strong> por organización. Si necesitas agregar más colaboradores, puedes <a href="{% url 'suscripcion-seleccionar-plan' %}" style="color: #60a5fa; text-decoration: underline;">cambiar al Plan Pro</a>.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <!-- Cupo de usuarios con barra de progreso -->
+        <div class="stat-card">
+            <div class="stat-icon users {% if limite_alcanzado %}full{% endif %}">
+                <i class="fas fa-users"></i>
+            </div>
+            <div style="flex:1; min-width:0;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                    <div class="stat-value">{{ total_users }}<span style="font-size:1rem; color:#64748b; -webkit-text-fill-color:#64748b;"> / {{ limite_usuarios }}</span></div>
+                    {% if limite_alcanzado %}
+                    <span style="font-size:0.75rem; color:#fbbf24; font-weight:600; background:rgba(245,158,11,0.15); padding:2px 8px; border-radius:999px; border:1px solid rgba(245,158,11,0.3);">LLENO</span>
+                    {% else %}
+                    <span style="font-size:0.75rem; color:#60a5fa;">{{ slots_disponibles }} libre{{ slots_disponibles|pluralize }}</span>
+                    {% endif %}
+                </div>
+                <div class="stat-label">Usuarios del plan actual</div>
+                <div class="user-quota-bar">
+                    <div class="user-quota-fill {% if limite_alcanzado %}warn{% else %}ok{% endif %}"
+                         style="width: {% widthratio total_users limite_usuarios 100 %}%;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon org">
+                <i class="fas fa-building"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 1.25rem;">{{ organizacion.nombre }}</div>
+                <div class="stat-label">Organización</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="filter-container">
+        <form method="GET" action="{% url 'users-list' %}" class="filter-grid">
+            <div class="filter-group">
+                <label class="filter-label">Buscar Usuario</label>
+                <input 
+                    type="text" 
+                    name="search" 
+                    value="{{ search_query }}"
+                    placeholder="Buscar por nombre o email..."
+                    class="filter-input"
+                >
+            </div>
+            
+            <div class="filter-group" style="display: flex; flex-direction: row; gap: 0.5rem; align-items: end;">
+                <button type="submit" class="btn-primary" style="height: 42px;">
+                    <i class="fas fa-search"></i>
+                    Buscar
+                </button>
+                {% if search_query %}
+                <a href="{% url 'users-list' %}" class="btn-secondary" style="height: 42px;">
+                    <i class="fas fa-times"></i>
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="users-table-container">
+        {% if users %}
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Fecha de Registro</th>
+                        <th>Último Acceso</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="user-name">
+                                <div class="user-avatar">
+                                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                                </div>
+                                <div class="user-info">
+                                    <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-email">{{ user.email }}</div>
+                        </td>
+                        <td>
+                            {% if user.is_organizacion_admin %}
+                                <span class="badge badge-admin">Administrador</span>
+                            {% else %}
+                                <span class="badge badge-user">Usuario</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.date_joined|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if user.last_login %}
+                                {{ user.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span style="color: var(--text-muted);">Nunca</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if user != request.user %}
+                                <form method="POST" action="{% url 'user-delete' user.pk %}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar a {{ user.first_name }} {{ user.last_name }}? Esta acción no se puede deshacer.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-icon btn-delete" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <h3>No se encontraron usuarios</h3>
+                <p>{% if search_query %}Intenta con otros criterios de búsqueda.{% else %}Comienza agregando un nuevo usuario.{% endif %}</p>
+                <a href="{% url 'user-create' %}" class="btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    Crear Primer Usuario
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Efecto de hover en las filas
+        const tableRows = document.querySelectorAll('.users-table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
+            });
+
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Ingresos / Ventas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .view-container {
+        max-width: 1300px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    /* ── Header ── */
+    .view-header {
+        background: linear-gradient(145deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #34d399 0%, #60a5fa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    /* ── Summary card ── */
+    .summary-card {
+        background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04));
+        border: 1px solid rgba(16,185,129,0.3);
+        border-radius: 16px;
+        padding: 1.2rem 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.2rem;
+    }
+    .summary-label { color: #34d399; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    .summary-value { color: #f8fafc; font-size: 1.6rem; font-weight: 800; font-family: monospace; }
+
+    /* ── Filters ── */
+    .filters-section {
+        background: rgba(30,41,59,0.6);
+        border-radius: 20px;
+        padding: 1.75rem 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .filter-label {
+        color: #94a3b8;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .form-control {
+        background: rgba(15,23,42,0.7);
+        border: 1px solid rgba(148,163,184,0.12);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        color: #f8fafc;
+        font-size: 0.92rem;
+        width: 100%;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(96,165,250,0.12);
+    }
+    input[type="date"].form-control { color-scheme: dark; }
+
+    .filter-actions { display: flex; gap: 0.6rem; align-items: flex-end; }
+
+    .btn-filter {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+        transition: all 0.25s;
+    }
+    .btn-filter-primary {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+    }
+    .btn-filter-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,130,246,0.35); }
+    .btn-filter-clear {
+        background: rgba(148,163,184,0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148,163,184,0.2);
+    }
+    .btn-filter-clear:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+    .btn-add {
+        padding: 0.85rem 1.75rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        transition: all 0.25s;
+    }
+    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
+
+    /* ── Table ── */
+    .table-container {
+        background: rgba(30,41,59,0.4);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.05);
+        overflow: hidden;
+    }
+    .table-responsive { overflow-x: auto; }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 700px;
+    }
+    .data-table th {
+        background: rgba(15,23,42,0.8);
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .data-table td {
+        padding: 1.25rem 1.5rem;
+        color: #f8fafc;
+        border-bottom: 1px solid rgba(255,255,255,0.02);
+        vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(96,165,250,0.04); }
+
+    .sucursal-badge {
+        background: rgba(96,165,250,0.1);
+        border: 1px solid rgba(96,165,250,0.25);
+        color: #60a5fa;
+        padding: 0.3rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .monto-cell {
+        font-family: monospace;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #34d399;
+    }
+
+    /* ── Action buttons ── */
+    .action-btn {
+        width: 34px; height: 34px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-size: 0.85rem;
+    }
+    .btn-edit  { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+    .btn-edit:hover { background: rgba(59,130,246,0.2); transform: translateY(-2px); }
+    .btn-delete{ background: rgba(239,68,68,0.1);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+    .btn-delete:hover { background: rgba(239,68,68,0.2); transform: translateY(-2px); }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center;
+        padding: 4rem;
+        color: #475569;
+    }
+    .empty-icon { font-size: 3.5rem; margin-bottom: 1rem; display: block; }
+
+    @media (max-width: 768px) {
+        .view-header { flex-direction: column; align-items: flex-start; }
+        .filters-row { flex-direction: column; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="view-container">
+
+    <!-- Header -->
+    <div class="view-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-cash-register"></i> Ingresos / Ventas
+            </h1>
+            <p style="color:#94a3b8; margin: 0.4rem 0 0; font-size:0.9rem;">
+                Registro de ventas e ingresos de tu organización
+            </p>
+        </div>
+        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+            <div class="summary-card">
+                <span class="summary-label">Total (filtros activos)</span>
+                <span class="summary-value">${{ total|intcomma }}</span>
+            </div>
+            <a href="{% url 'crear-venta' fecha_hoy %}?next={{ lista_url }}" class="btn-add">
+                <i class="fas fa-plus"></i> Nuevo Ingreso
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-section">
+        <form method="get" class="filters-row">
+            <div class="filter-group">
+                <label class="filter-label">Sucursal</label>
+                <select name="sucursal" class="form-control">
+                    <option value="">Todas</option>
+                    {% for s in sucursales %}
+                        <option value="{{ s.id }}" {% if filters.sucursal == s.id|stringformat:"i" %}selected{% endif %}>
+                            {{ s.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Fecha desde</label>
+                <input type="date" name="fecha_desde" class="form-control"
+                       value="{{ filters.fecha_desde|default:'' }}">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Fecha hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control"
+                       value="{{ filters.fecha_hasta|default:'' }}">
+            </div>
+
+            <div class="filter-actions">
+                <a href="{% url 'lista-ventas' %}" class="btn-filter btn-filter-clear" title="Limpiar filtros">
+                    <i class="fas fa-eraser"></i>
+                </a>
+                <button type="submit" class="btn-filter btn-filter-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th>Sucursal</th>
+                        <th style="text-align:right;">Monto</th>
+                        <th style="text-align:center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td style="color:#475569; font-size:0.85rem;">{{ venta.id }}</td>
+                        <td>
+                            <span style="font-weight:600;">{{ venta.fecha|date:"d M Y" }}</span>
+                        </td>
+                        <td>
+                            <span class="sucursal-badge">
+                                <i class="fas fa-store" style="font-size:0.75em;"></i>
+                                {{ venta.sucursal.nombre }}
+                            </span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span class="monto-cell">${{ venta.monto|intcomma }}</span>
+                        </td>
+                        <td style="text-align:center;">
+                            <div style="display:flex; justify-content:center; gap:0.4rem;">
+                                <a href="{% url 'editar-venta' venta.id venta.fecha|date:'Y-m-d' %}?next={{ lista_url }}"
+                                   class="action-btn btn-edit" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST"
+                                      action="{% url 'eliminar-venta' venta.id venta.fecha|date:'Y-m-d' %}"
+                                      style="display:inline;"
+                                      onsubmit="return confirm('¿Eliminar ingreso de ${{ venta.monto }} ({{ venta.fecha|date:'d M Y' }})?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next_url" value="{{ lista_url }}">
+                                    <button type="submit" class="action-btn btn-delete" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class="fas fa-receipt empty-icon"></i>
+                            <p style="font-size:1.1rem; color:#64748b;">No se encontraron ingresos con los filtros seleccionados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

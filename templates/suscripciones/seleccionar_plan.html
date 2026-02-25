@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Selecciona un Plan - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .plan-container {
+        max-width: 900px;
+        margin: 4rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .plan-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .plan-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+
+    .plan-header p {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .plan-card {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 2.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .plan-card:hover {
+        transform: translateY(-5px);
+        background: rgba(30, 41, 59, 0.9);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .plan-card.pro {
+        border-color: rgba(139, 92, 246, 0.3);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(139, 92, 246, 0.05) 100%);
+    }
+
+    .plan-card.pro::before {
+        content: "RECOMENDADO";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        padding: 0.5rem;
+    }
+
+    .plan-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.5rem;
+    }
+    .plan-card.pro .plan-name { color: #a78bfa; margin-top: 1rem; }
+
+    .plan-price {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 0.25rem;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    
+    .plan-price span.currency { font-size: 1.5rem; padding-top: 0.5rem; margin-right: 0.2rem; }
+    .plan-price span.period { font-size: 1rem; color: #64748b; font-weight: 500; align-self: flex-end; margin-bottom: 0.6rem; margin-left: 0.5rem; }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+        text-align: left;
+    }
+
+    .plan-features li {
+        color: #cbd5e1;
+        padding: 0.75rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .plan-features li i {
+        color: #10b981;
+        font-size: 1.1rem;
+    }
+
+    .btn-select {
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-select.basic {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    .btn-select.basic:hover { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+
+    .btn-select.pro {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        color: white;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    .btn-select.pro:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="plan-container">
+    <div class="plan-header">
+        <h1>Selecciona un Plan</h1>
+        <p>Elige el plan que mejor se adapte al tamaño de tu equipo. Podrás cambiar de plan o cancelar en cualquier momento.</p>
+    </div>
+
+    <div class="plans-grid">
+        <!-- Plan Básico -->
+        <div class="plan-card">
+            <div class="plan-name">Básico</div>
+            <div class="plan-price">
+                <span class="currency">$</span>{{ PLAN_BASICO_PRECIO|floatformat:0 }}<span class="period">/mes</span>
+            </div>
+            
+            <ul class="plan-features">
+                <li><i class="fas fa-check-circle"></i> Hasta <strong>{{ PLAN_BASICO_MAX_USUARIOS }} usuarios</strong> (empleados)</li>
+
+                <li><i class="fas fa-check-circle"></i> Tabulador Dinámico</li>
+                <li><i class="fas fa-check-circle"></i> PDF de Cortes</li>
+                <li><i class="fas fa-check-circle"></i> Reportes Financieros</li>
+            </ul>
+
+            <form method="POST" action="{% if suscripcion.plan %}{% url 'suscripcion-cambiar-plan' %}{% else %}{% url 'suscripcion-seleccionar-plan' %}{% endif %}">
+                {% csrf_token %}
+                <input type="hidden" name="plan" value="BASICO">
+                <button type="submit" class="btn-select basic">
+                    {% if suscripcion.plan == 'BASICO' %}Plan Actual (Básico){% else %}Seleccionar Básico{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Plan Pro -->
+        <div class="plan-card pro">
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">
+                <span class="currency">$</span>{{ PLAN_PRO_PRECIO|floatformat:0 }}<span class="period">/mes</span>
+            </div>
+            
+            <ul class="plan-features">
+                <li><i class="fas fa-check-circle"></i> Hasta <strong>{{ PLAN_PRO_MAX_USUARIOS }} usuarios</strong> (empleados)</li>
+                <li><i class="fas fa-check-circle"></i> Tabulador Dinámico</li>
+                <li><i class="fas fa-check-circle"></i> PDF de Cortes</li>
+                <li><i class="fas fa-check-circle"></i> Reportes Financieros</li>
+            </ul>
+
+            <form method="POST" action="{% if suscripcion.plan %}{% url 'suscripcion-cambiar-plan' %}{% else %}{% url 'suscripcion-seleccionar-plan' %}{% endif %}">
+                {% csrf_token %}
+                <input type="hidden" name="plan" value="PRO">
+                <button type="submit" class="btn-select pro">
+                    {% if suscripcion.plan == 'PRO' %}Plan Actual (Pro){% else %}Seleccionar Pro{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

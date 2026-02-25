@@ -1,0 +1,614 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuración{% endblock %}
+
+{% block extra_css %}
+<style>
+    .config-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .page-subtitle {
+        color: var(--text-muted);
+        margin-bottom: 2.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* ── Suscripción Banner ── */
+    .suscripcion-banner {
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+        margin-bottom: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .suscripcion-banner::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+    }
+
+    .suscripcion-banner.trial {
+        background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(59,130,246,0.1) 100%);
+        border: 1px solid rgba(16,185,129,0.4);
+    }
+
+    .suscripcion-banner.activa {
+        background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.1) 100%);
+        border: 1px solid rgba(59,130,246,0.4);
+    }
+
+    .suscripcion-banner.vencida,
+    .suscripcion-banner.cancelada {
+        background: linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(107,114,128,0.05) 100%);
+        border: 1px solid rgba(239,68,68,0.3);
+    }
+
+    .banner-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .banner-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .banner-icon.trial  { background: rgba(16,185,129,0.2); color: #34d399; }
+    .banner-icon.activa { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .banner-icon.vencida,
+    .banner-icon.cancelada { background: rgba(239,68,68,0.15); color: #f87171; }
+
+    .banner-text h3 {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .banner-text p {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .banner-right {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .trial-countdown {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(16,185,129,0.15);
+        border: 1px solid rgba(16,185,129,0.3);
+        color: #34d399;
+        padding: 0.4rem 0.875rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* ── Sección de Cards ── */
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .settings-card {
+        background: rgba(30,41,59,0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1.75rem;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .settings-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(59,130,246,0.4);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .settings-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .icon-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .icon-green  { background: rgba(16,185,129,0.15); color: #34d399; }
+    .icon-purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .icon-red    { background: rgba(239,68,68,0.1);   color: #f87171; }
+    .icon-orange { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+    .settings-card h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .settings-card p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .settings-card .card-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1.25rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .settings-card .card-arrow i {
+        color: var(--accent-blue);
+        transition: transform 0.2s;
+    }
+
+    .settings-card:hover .card-arrow i {
+        transform: translateX(4px);
+    }
+
+    /* ─── Card peligrosa (cancelar) ─── */
+    .settings-card.danger {
+        border-color: rgba(239,68,68,0.2);
+    }
+    .settings-card.danger:hover {
+        border-color: rgba(239,68,68,0.5);
+        box-shadow: 0 10px 30px rgba(239,68,68,0.1);
+    }
+
+    /* ── Mensajes ── */
+    .alert-success {
+        background: rgba(34,197,94,0.1);
+        border: 1px solid rgba(34,197,94,0.3);
+        color: #bbf7d0;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+    .alert-error {
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.3);
+        color: #f87171;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    /* Modal cancelar */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 3000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+        background: var(--secondary-dark);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        max-width: 440px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .modal-icon {
+        width: 64px; height: 64px;
+        background: rgba(239,68,68,0.15);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem; color: #f87171;
+        margin: 0 auto 1.5rem;
+    }
+
+    .modal-box h3 {
+        font-size: 1.4rem; font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .modal-box p {
+        color: var(--text-muted); font-size: 0.9rem;
+        line-height: 1.6; margin-bottom: 2rem;
+    }
+
+    .modal-actions {
+        display: flex; gap: 1rem;
+    }
+
+    .btn-modal-cancel {
+        flex: 1;
+        padding: 0.875rem;
+        background: rgba(30,41,59,0.8);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: inherit;
+        transition: all 0.2s;
+    }
+    .btn-modal-cancel:hover { border-color: var(--accent-blue); }
+
+    .btn-modal-confirm {
+        flex: 1;
+        padding: 0.875rem;
+        background: rgba(239,68,68,0.2);
+        color: #f87171;
+        border: 1px solid rgba(239,68,68,0.4);
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: inherit;
+        transition: all 0.2s;
+    }
+    .btn-modal-confirm:hover { background: rgba(239,68,68,0.3); }
+
+    @media (max-width: 768px) {
+        .config-container { padding: 1rem; }
+        .suscripcion-banner { flex-direction: column; }
+        .settings-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="config-container">
+
+    <h1 class="page-title">Configuración</h1>
+    <p class="page-subtitle">Gestiona tu cuenta, suscripción y preferencias.</p>
+
+
+    <!-- ── Suscripción Banner ── -->
+    {% if suscripcion %}
+    <div class="suscripcion-banner {{ suscripcion.estado|lower }}">
+        <div class="banner-left">
+            <div class="banner-icon {{ suscripcion.estado|lower }}">
+                {% if suscripcion.estado == 'TRIAL' %}🎉
+                {% elif suscripcion.estado == 'ACTIVA' %}<i class="fas fa-check-circle"></i>
+                {% elif suscripcion.estado == 'VENCIDA' %}<i class="fas fa-exclamation-triangle"></i>
+                {% else %}<i class="fas fa-times-circle"></i>{% endif %}
+            </div>
+            <div class="banner-text">
+                <h3>
+                    {% if suscripcion.estado == 'TRIAL' %}Período de Prueba Activo
+                    {% elif suscripcion.estado == 'ACTIVA' %}Suscripción Activa
+                    {% elif suscripcion.estado == 'VENCIDA' %}Suscripción Vencida
+                    {% else %}Suscripción Cancelada{% endif %}
+                </h3>
+                <p>
+                    {% if suscripcion.estado == 'TRIAL' %}
+                        Prueba gratis hasta el <strong>{{ suscripcion.trial_fin|date:"d/m/Y" }}</strong>.
+                        Después se cobrarán ${{ suscripcion.precio_mensual|floatformat:0 }} MXN/mes.
+                    {% elif suscripcion.estado == 'ACTIVA' %}
+                        Próximo cobro: <strong>{{ suscripcion.proximo_cobro|date:"d/m/Y" }}</strong> –
+                        ${{ suscripcion.precio_mensual|floatformat:0 }} MXN
+                        {% if suscripcion.card_last4 %}· Tarjeta <strong>****{{ suscripcion.card_last4 }}</strong>{% endif %}
+                    {% elif suscripcion.estado == 'VENCIDA' %}
+                        Tu suscripción venció. Agrega un método de pago para reactivarla.
+                    {% else %}
+                        Tu suscripción ha sido cancelada.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="banner-right">
+            {% if suscripcion.estado == 'TRIAL' %}
+                <span class="trial-countdown">
+                    <i class="fas fa-clock"></i>
+                    {{ suscripcion.trial_dias_restantes }} días restantes
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Cards de Configuración ── -->
+    <div class="settings-grid">
+
+        <!-- Cambiar Contraseña -->
+        <a href="{% url 'change-password' %}" class="settings-card">
+            <div class="settings-card-icon icon-blue">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3>Cambiar Contraseña</h3>
+            <p>Actualiza tu contraseña para mantener tu cuenta segura.</p>
+            <div class="card-arrow">
+                <span>Ir a seguridad</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Seguridad 2FA -->
+        {% if request.user.totp_enabled %}
+        <div class="settings-card" onclick="abrirModal2FADesactivar()" style="cursor:pointer;">
+            <div class="settings-card-icon icon-green">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3>Seguridad 2FA <span style="font-size:0.7rem;background:rgba(16,185,129,0.2);color:#34d399;border:1px solid rgba(16,185,129,0.35);padding:2px 8px;border-radius:999px;vertical-align:middle;margin-left:6px;">ACTIVO</span></h3>
+            <p>Tu cuenta está protegida con autenticación en dos pasos.</p>
+            <div class="card-arrow">
+                <span>Desactivar 2FA</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+        {% else %}
+        <a href="{% url 'setup-2fa' %}" class="settings-card">
+            <div class="settings-card-icon icon-purple">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3>Activar Seguridad 2FA</h3>
+            <p>Vincula Authy a tu cuenta para añadir una capa extra de protección.</p>
+            <div class="card-arrow">
+                <span>Configurar 2FA</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        {% endif %}
+
+        <!-- Códigos de Recuperación (solo si 2FA activo) -->
+        {% if request.user.totp_enabled %}
+        <a href="{% url 'codigos-recuperacion' %}" class="settings-card">
+            <div class="settings-card-icon icon-orange">
+                <i class="fas fa-key"></i>
+            </div>
+            <h3>Códigos de Recuperación</h3>
+            <p>Consulta o regenera tus códigos de acceso de emergencia para 2FA.</p>
+            <div class="card-arrow">
+                <span>Ver códigos</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+        {% endif %}
+
+
+        {% if request.user.is_organizacion_admin %}
+        <!-- Editar Organización -->
+        <a href="{% url 'editar-organizacion' %}" class="settings-card">
+            <div class="settings-card-icon icon-purple">
+                <i class="fas fa-building"></i>
+            </div>
+            <h3>Organización</h3>
+            <p>Cambia el nombre de tu organización.</p>
+            <div class="card-arrow">
+                <span>Editar organización</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Plan de Suscripción -->
+        <a href="{% url 'suscripcion-seleccionar-plan' %}" class="settings-card">
+            <div class="settings-card-icon icon-blue">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <h3>
+                Plan Actual: {% if suscripcion.plan %}{{ suscripcion.plan_display }}{% else %}Ninguno{% endif %}
+            </h3>
+            <p>
+                Cambia de plan en cualquier momento para ajustar tu límite de usuarios.
+            </p>
+            <div class="card-arrow">
+                <span>{% if suscripcion.plan %}Cambiar Plan{% else %}Elegir Plan{% endif %}</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Método de Pago -->
+        <a href="{% url 'suscripcion-metodo-pago' %}" class="settings-card">
+            <div class="settings-card-icon icon-green">
+                <i class="fas fa-credit-card"></i>
+            </div>
+            <h3>
+                {% if suscripcion and suscripcion.tiene_metodo_pago %}
+                    Actualizar Tarjeta
+                {% else %}
+                    Agregar Método de Pago
+                {% endif %}
+            </h3>
+            <p>
+                {% if suscripcion and suscripcion.tiene_metodo_pago and suscripcion.card_last4 %}
+                    Tarjeta actual: {{ suscripcion.card_brand|capfirst }} ****{{ suscripcion.card_last4 }}
+                {% else %}
+                    Agrega una tarjeta para mantener tu suscripción.
+                {% endif %}
+            </p>
+            <div class="card-arrow">
+                <span>Gestionar pago</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Gestionar Usuarios -->
+        <a href="{% url 'users-list' %}" class="settings-card">
+            <div class="settings-card-icon icon-orange">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>Gestión de Usuarios</h3>
+            <p>Agrega, consulta o elimina usuarios de tu organización.</p>
+            <div class="card-arrow">
+                <span>Ver usuarios</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Historial de Cobros -->
+        <a href="{% url 'suscripcion-historial' %}" class="settings-card">
+            <div class="settings-card-icon icon-orange">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3>Historial de Cobros</h3>
+            <p>Consulta todos tus pagos y ejecuta cobros manuales durante pruebas.</p>
+            <div class="card-arrow">
+                <span>Ver historial</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </a>
+
+        <!-- Cancelar Suscripción -->
+        {% if suscripcion and suscripcion.estado != 'CANCELADA' %}
+        <div class="settings-card danger" onclick="abrirModalCancelar()" style="cursor: pointer;">
+            <div class="settings-card-icon icon-red">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <h3>Cancelar Suscripción</h3>
+            <p>Cancela tu suscripción. Mantendrás acceso hasta el final del período pagado.</p>
+            <div class="card-arrow">
+                <span>Cancelar</span>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %} {# fin is_organizacion_admin #}
+    </div>
+</div>
+
+<!-- ── Modal: Confirmar Cancelación ── -->
+<div class="modal-overlay" id="modalCancelar">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3>¿Cancelar Suscripción?</h3>
+        <p>
+            Al cancelar, tu organización mantendrá acceso hasta el final del período actual.
+            Después de eso, no podrás iniciar sesión.<br><br>
+            <strong>Esta acción no se puede deshacer.</strong>
+        </p>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="cerrarModalCancelar()">
+                <i class="fas fa-times"></i> Conservar
+            </button>
+            <form method="POST" action="{% url 'suscripcion-cancelar' %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn-modal-confirm" style="width:100%;">
+                    <i class="fas fa-times-circle"></i> Sí, Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal: Desactivar 2FA ── -->
+<div class="modal-overlay" id="modal2FADesactivar">
+    <div class="modal-box">
+        <div class="modal-icon" style="color:#f87171;"><i class="fas fa-shield-alt"></i></div>
+        <h3>Desactivar 2FA</h3>
+        <p>
+            Ingresa tu código de Authy <strong>o un código de recuperación</strong> (XXXX-XXXX)
+            para confirmar que deseas desactivar la verificación en dos pasos.
+        </p>
+        <p style="font-size:0.82rem; color:#64748b; margin-top:0.5rem;">
+            <i class="fas fa-info-circle"></i>
+            ¿Perdiste tu celular? Usa uno de tus códigos de recuperación guardados.
+        </p>
+        <form method="POST" action="{% url 'desactivar-2fa' %}" style="margin-top:1.25rem;">
+            {% csrf_token %}
+            <input type="text" name="token" id="token2fa"
+                   maxlength="9" minlength="6"
+                   placeholder="000000  ó  XXXX-XXXX" autocomplete="one-time-code"
+                   style="
+                       width:100%; padding:0.9rem; text-align:center; font-size:1.25rem;
+                       font-family:monospace; letter-spacing:0.15em;
+                       background:rgba(255,255,255,0.05); border:1px solid rgba(239,68,68,0.3);
+                       border-radius:10px; color:#f1f5f9; outline:none; margin-bottom:1rem;
+                   " required>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="cerrarModal2FADesactivar()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="submit" class="btn-modal-confirm" style="width:100%; background:linear-gradient(135deg,#ef4444,#b91c1c);">
+                    <i class="fas fa-shield-alt"></i> Desactivar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function abrirModalCancelar() {
+        document.getElementById('modalCancelar').classList.add('active');
+    }
+    function cerrarModalCancelar() {
+        document.getElementById('modalCancelar').classList.remove('active');
+    }
+    // Cerrar con click fuera
+    document.getElementById('modalCancelar').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModalCancelar();
+    });
+
+    function abrirModal2FADesactivar() {
+        document.getElementById('modal2FADesactivar').classList.add('active');
+        setTimeout(() => document.getElementById('token2fa').focus(), 150);
+    }
+    function cerrarModal2FADesactivar() {
+        document.getElementById('modal2FADesactivar').classList.remove('active');
+    }
+    document.getElementById('modal2FADesactivar').addEventListener('click', function(e) {
+        if (e.target === this) cerrarModal2FADesactivar();
+    });
+    // Auto-submit al completar 6 dígitos
+    const t2fa = document.getElementById('token2fa');
+    if (t2fa) {
+        t2fa.addEventListener('input', function() {
+            if (this.value.length === 6) this.closest('form').requestSubmit();
+        });
+    }
+</script>
+{% endblock %}

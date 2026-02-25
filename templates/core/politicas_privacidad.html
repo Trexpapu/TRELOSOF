@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Políticas de Privacidad - TRE BANKS{% endblock %}
+
+{% block content %}
+<div style="background: var(--bg-card); border-radius: 1rem; border: 1px solid var(--border-color); padding: 3rem; max-width: 900px; margin: 0 auto;">
+    <h1 style="color: var(--text-light); font-size: 2rem; margin-bottom: 0.5rem;">Políticas de Privacidad</h1>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Última actualización: Febrero 2026</p>
+
+    <div style="color: var(--text-color); line-height: 1.7; font-size: 0.95rem;">
+        <h2 style="color: var(--text-light); font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem;">1. Recopilación de Información</h2>
+        <p style="margin-bottom: 1rem;">
+            TRE BANKS recopila el nombre, correo electrónico y demás información necesaria para el funcionamiento de 
+            su cuenta y gestión de la organización. También procesamos datos transaccionales de ventas, compras y 
+            movimientos según lo ingrese en el sistema.
+        </p>
+
+        <h2 style="color: var(--text-light); font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem;">2. Uso de la Información</h2>
+        <p style="margin-bottom: 1rem;">
+            Utilizamos la información recopilada para operar y mantener el servicio TRE BANKS, mejorar la experiencia 
+            del usuario y facilitar el soporte técnico. No comercializamos ni alquilamos su información personal 
+            a terceros.
+        </p>
+
+        <h2 style="color: var(--text-light); font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem;">3. Protección de los Datos</h2>
+        <p style="margin-bottom: 1rem;">
+            Empleamos medidas de seguridad técnicas e institucionales para proteger sus datos personales contra 
+            accesos no autorizados, alteraciones o destrucción. Las contraseñas se almacenan mediante algoritmos 
+            seguros de encriptación unidireccional.
+        </p>
+
+        <h2 style="color: var(--text-light); font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem;">4. Procesadores de Pagos (Stripe)</h2>
+        <p style="margin-bottom: 1rem;">
+            Para la gestión de suscripciones, utilizamos a Stripe como pasarela de pago segura. TRE BANKS no almacena 
+            los números completos de sus tarjetas de crédito o débito, remitiendo dicha información directamente al 
+            proveedor de pagos, quien los protege conforme a la normativa PCI-DSS.
+        </p>
+
+        <h2 style="color: var(--text-light); font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem;">5. Retención de los Datos</h2>
+        <p style="margin-bottom: 1rem;">
+            Mantendremos su información en el sistema mientras su cuenta permanezca activa o según sea necesario para 
+            proporcionar nuestros servicios. En caso de cancelación de cuenta, podremos conservar cierta información en 
+            estricto apego a los requerimientos legales y regulatorios aplicables.
+        </p>
+
+        <h2 style="color: var(--text-light); font-size: 1.25rem; margin-top: 2rem; margin-bottom: 1rem;">6. Contacto</h2>
+        <p style="margin-bottom: 1rem;">
+            Si tiene alguna pregunta respecto a nuestras Políticas de Privacidad, el uso de sus datos o nuestras medidas 
+            de seguridad, le invitamos a ponerse en contacto con nuestro equipo de soporte directamente a través de  
+            <a href="mailto:trexteasterpro@gmail.com" style="color: var(--accent-blue); text-decoration: none;">trexteasterpro@gmail.com</a>.
+        </p>
+    </div>
+</div>
+{% endblock %}

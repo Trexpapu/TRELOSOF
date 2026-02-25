@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Facturas - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reuse styles from movimientos.html for consistency */
+    .view-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    /* Header Styling */
+    .view-header {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    /* Filters Section */
+    .filters-section {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+    }
+
+    .filters-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-left: 0.25rem;
+    }
+
+    .form-control {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        color: #f8fafc;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #60a5fa;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    /* Buttons */
+    .filter-actions {
+        display: flex;
+        gap: 0.75rem;
+        height: 48px;
+    }
+
+    .btn-submit {
+        flex: 3;
+        min-width: 140px;
+        height: 52px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-clear {
+        flex: 1;
+        min-width: 60px;
+        height: 52px;
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-clear:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Table */
+    .table-container {
+        background: rgba(30, 41, 59, 0.4);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 1000px;
+    }
+
+    .data-table th {
+        background: rgba(15, 23, 42, 0.8);
+        padding: 1.5rem;
+        text-align: left;
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .data-table td {
+        padding: 1.5rem;
+        color: #f8fafc;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        vertical-align: top;
+    }
+
+    .data-table tr:hover td {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    /* Badges */
+    .badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .badge-pendiente { background: rgba(234, 179, 8, 0.1); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.2); }
+    .badge-pagado { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge-abonado { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+
+    /* Action Buttons */
+    .action-btn {
+        width: 36px; 
+        height: 36px; 
+        border-radius: 8px;
+        display: inline-flex; 
+        align-items: center; 
+        justify-content: center;
+        transition: all 0.2s ease; 
+        text-decoration: none;
+        margin-right: 0.25rem;
+    }
+
+    .btn-pay { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .btn-pay:hover { background: rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
+
+    .btn-edit { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .btn-edit:hover { background: rgba(59, 130, 246, 0.2); transform: translateY(-2px); }
+
+    .btn-delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-delete:hover { background: rgba(239, 68, 68, 0.2); transform: translateY(-2px); }
+
+    /* Installment List */
+    .installment-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 0.9em;
+    }
+    .installment-item {
+        margin-bottom: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        color: #cbd5e1;
+    }
+    .installment-date { opacity: 0.8; }
+    .installment-amount { font-family: monospace; }
+    
+    .provider-name {
+        font-weight: 600;
+        color: #f8fafc;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    .folio-text {
+        color: #94a3b8;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="view-container">
+    <div class="view-header">
+        <h1 class="page-title">
+            <i class="fas fa-file-invoice-dollar"></i> Administración de Facturas
+        </h1>
+        <a href="{% url 'crear-factura' fecha_hoy %}?next={{ lista_url }}" class="btn-submit" style="flex: 0 0 auto; width: auto; padding: 0 2rem;">
+            <i class="fas fa-plus"></i> Nueva Factura
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-section">
+        <form method="get" class="filters-grid">
+            <div class="form-group">
+                <label class="form-label">Folio</label>
+                <input type="text" name="folio" value="{{ filters.folio|default:'' }}" class="form-control" placeholder="Buscar folio...">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Proveedor</label>
+                <select name="proveedor" class="form-control">
+                    <option value="">Todos</option>
+                    {% for prov in proveedores %}
+                        <option value="{{ prov.id }}" {% if filters.proveedor == prov.id|stringformat:"i" %}selected{% endif %}>
+                            {{ prov.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-control">
+                    <option value="">Todos</option>
+                    {% for codigo, nombre in estados %}
+                        <option value="{{ codigo }}" {% if filters.estado == codigo %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tipo</label>
+                <select name="tipo" class="form-control">
+                    <option value="">Todos</option>
+                    {% for codigo, nombre in tipos %}
+                        <option value="{{ codigo }}" {% if filters.tipo == codigo %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-actions">
+                <a href="{% url 'lista-facturas' %}" class="btn-clear" title="Limpiar filtros">
+                    <i class="fas fa-eraser"></i>
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Factura</th>
+                        <th>Tipo/Estado</th>
+                        <th>Fechas de Pago</th>
+                        <th style="text-align: right;">Monto Total</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for factura in facturas %}
+                    <tr>
+                        <td>
+                            <span class="provider-name">{{ factura.proveedor.nombre }}</span>
+                            <span class="folio-text">Folio: {{ factura.folio }}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <span class="badge badge-{{ factura.estado|lower }}">{{ factura.get_estado_display }}</span>
+                                <span style="font-size: 0.85em; color: #94a3b8;">{{ factura.get_tipo_display }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <ul class="installment-list">
+                                {% for fecha in factura.facturasfechasdepago_set.all %}
+                                <li class="installment-item">
+                                    <span class="installment-date">{{ fecha.fecha_por_pagar|date:"d M Y" }}</span>
+                                    <span class="installment-amount">${{ fecha.monto_por_pagar|intcomma }}</span>
+                                </li>
+                                {% empty %}
+                                <li style="color: #64748b;">Sin fechas programadas</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td style="text-align: right;">
+                            <span style="font-family: monospace; font-weight: 700; font-size: 1.1em;">
+                                ${{ factura.monto|intcomma }}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; justify-content: center;">
+                                {% if factura.estado != 'PAGADO' %}
+                                <a href="{% url 'pagar-factura' factura.id fecha_hoy %}" class="action-btn btn-pay" title="Pagar">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
+                                {% endif %}
+                                
+                                <a href="{% url 'editar-factura' factura.id fecha_hoy %}?next={{ lista_url }}" class="action-btn btn-edit" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <form method="POST" action="{% url 'eliminar-factura' factura.id fecha_hoy %}" style="display:inline;" onsubmit="return confirm('¿Eliminar factura {{ factura.folio }}? Esto eliminará también los movimientos asociados.');">
+                                    {% csrf_token %}
+                                    <!-- Retornar a lista-facturas después de eliminar -->
+                                    <input type="hidden" name="next_url" value="{{ lista_url }}">
+                                    <button type="submit" class="action-btn btn-delete" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-folder-open" style="font-size: 3rem; color: #334155; margin-bottom: 1rem;"></i>
+                            <p style="color: #94a3b8;">No se encontraron facturas con los filtros seleccionados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

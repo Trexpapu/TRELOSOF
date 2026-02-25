@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualizar Método de Pago{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pago-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent-blue); }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.4rem;
+    }
+    .page-subtitle {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+    }
+
+    .current-card {
+        background: rgba(30,41,59,0.7);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .current-card .card-icon {
+        font-size: 1.75rem;
+        color: var(--text-muted);
+    }
+
+    .current-card .card-info h4 {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        text-transform: capitalize;
+    }
+
+    .current-card .card-info p {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .payment-card {
+        background: rgba(30,41,59,0.85);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .section-title i { color: var(--accent-blue); }
+
+    .form-group { margin-bottom: 1.5rem; }
+
+    .form-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 0.6rem;
+    }
+
+    #card-element {
+        background: rgba(15,23,42,0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.875rem 1rem;
+        transition: all 0.3s ease;
+        min-height: 44px;
+    }
+    #card-element.StripeElement--focus {
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    #card-element.StripeElement--invalid { border-color: #ef4444; }
+
+    #card-errors {
+        color: #f87171;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        min-height: 1.25rem;
+    }
+
+    .security-note {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(15,23,42,0.3);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.875rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    .security-note i { color: #34d399; font-size: 1.1rem; flex-shrink: 0; }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-save {
+        flex: 1;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        color: white;
+        padding: 0.875rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+    .btn-save:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59,130,246,0.3);
+    }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-cancel {
+        padding: 0.875rem 1.25rem;
+        background: rgba(30,41,59,0.7);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    .btn-cancel:hover {
+        border-color: var(--accent-blue);
+        background: rgba(59,130,246,0.1);
+    }
+
+    .spinner {
+        display: none;
+        width: 18px; height: 18px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading .spinner { display: block; }
+    .loading .btn-text { display: none; }
+
+    @media (max-width: 768px) {
+        .pago-container { padding: 0 1rem; }
+        .payment-card { padding: 1.5rem; }
+        .form-actions { flex-direction: column; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pago-container">
+
+    {% if suscripcion.estado == 'VENCIDA' or suscripcion.estado == 'CANCELADA' %}
+    <!-- ── Banner de cuenta bloqueada ── -->
+    <div style="
+        background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(185,28,28,0.1) 100%);
+        border: 1px solid rgba(239,68,68,0.4);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+    ">
+        <div style="
+            width: 52px; height: 52px;
+            background: rgba(239,68,68,0.2);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #f87171; flex-shrink: 0;
+        ">
+            <i class="fas fa-lock"></i>
+        </div>
+        <div>
+            <div style="font-weight: 700; font-size: 1.05rem; color: #fca5a5; margin-bottom: 0.25rem;">
+                Tu acceso está suspendido
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+                Agrega una tarjeta de crédito o débito para reactivar el sistema de inmediato.
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <a href="{% url 'configuracion-index' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        Volver a Configuración
+    </a>
+    {% endif %}
+
+    <h1 class="page-title">
+        {% if suscripcion.tiene_metodo_pago %}Actualizar{% else %}Agregar{% endif %} Método de Pago
+    </h1>
+    <p class="page-subtitle">
+        {% if suscripcion.estado == 'VENCIDA' or suscripcion.estado == 'CANCELADA' %}
+            Una vez que guardes tu tarjeta, podrás pagar y recuperar el acceso completo.
+        {% elif suscripcion.tiene_metodo_pago %}
+            Reemplaza tu tarjeta actual con una nueva.
+        {% else %}
+            Agrega una tarjeta para mantener tu suscripción activa.
+        {% endif %}
+    </p>
+
+
+    {% if suscripcion.tiene_metodo_pago %}
+    <div class="current-card">
+        <div class="card-icon">
+            {% if suscripcion.card_brand == 'visa' %}💳{% elif suscripcion.card_brand == 'mastercard' %}💳{% else %}<i class="fas fa-credit-card"></i>{% endif %}
+        </div>
+        <div class="card-info">
+            <h4>{{ suscripcion.card_brand|default:"Tarjeta" }} terminada en {{ suscripcion.card_last4 }}</h4>
+            <p>Vence {{ suscripcion.card_exp_month }}/{{ suscripcion.card_exp_year }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="payment-card">
+        <h3 class="section-title">
+            <i class="fas fa-credit-card"></i>
+            Nueva Tarjeta
+        </h3>
+
+        <div class="security-note">
+            <i class="fas fa-shield-alt"></i>
+            <span>Procesado de forma segura por <strong>Stripe</strong>. No guardamos datos de tu tarjeta.</span>
+        </div>
+
+        <form id="payment-form" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="payment_method_id" name="payment_method_id">
+
+            <div class="form-group">
+                <label class="form-label">Número, expiración y CVV</label>
+                <div id="card-element"></div>
+                <div id="card-errors"></div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'configuracion-index' %}" class="btn-cancel">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" id="submit-btn" class="btn-save">
+                    <div class="spinner"></div>
+                    <span class="btn-text">
+                        <i class="fas fa-save"></i>
+                        Guardar Tarjeta
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_public_key }}');
+    const elements = stripe.elements({
+        appearance: {
+            theme: 'night',
+            variables: {
+                colorPrimary: '#3b82f6',
+                colorBackground: '#0f172a',
+                colorText: '#ffffff',
+                colorInputText: '#ffffff',
+                colorInputBackground: '#0f172a',
+                colorDanger: '#ef4444',
+                borderRadius: '8px',
+                fontFamily: 'Inter, sans-serif',
+            }
+        }
+    });
+
+    const cardElement = elements.create('card', {
+        style: {
+            base: {
+                color: '#ffffff',
+                fontFamily: '"Inter", sans-serif',
+                fontSize: '16px',
+                fontWeight: '500',
+                '::placeholder': { color: '#64748b' },
+                iconColor: '#94a3b8',
+            },
+            invalid: {
+                color: '#f87171',
+                iconColor: '#f87171',
+            }
+        }
+    });
+    cardElement.mount('#card-element');
+
+    cardElement.on('change', function(event) {
+        document.getElementById('card-errors').textContent = event.error ? '⚠ ' + event.error.message : '';
+    });
+
+    const form = document.getElementById('payment-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        const { error, paymentMethod } = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
+        });
+
+        if (error) {
+            document.getElementById('card-errors').textContent = '⚠ ' + error.message;
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+        } else {
+            document.getElementById('payment_method_id').value = paymentMethod.id;
+            form.submit();
+        }
+    });
+</script>
+{% endblock %}

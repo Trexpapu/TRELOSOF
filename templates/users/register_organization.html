@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Organización | Sistema</title>
+    <!-- Mismos estilos base que login -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            display: flex;
+            max-width: 1000px; /* Un poco más ancho para registro */
+            width: 100%;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Revertimos el orden para frescura visual en registro: Form izq, Info der */
+        .login-left {
+            flex: 1.2;
+            padding: 50px;
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            display: flex; /* Asegura layout flexible */
+            flex-direction: column; 
+        }
+
+        .login-right {
+            flex: 1;
+            padding: 50px;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); /* Azul (Igual que login) */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #f8fafc;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fecaca;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .login-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Estilos lista derecha */
+        .features { list-style: none; margin-top: 30px; }
+        .features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .login-container { flex-direction: column-reverse; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Izquierda: Formulario -->
+        <div class="login-left">
+            <h2>Crear Organización</h2>
+            <p class="subtitle">Registra tu empresa y comienza a gestionar.</p>
+
+
+            {% if form.errors %}
+                <div class="alert-error">
+                    <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label">Nombre de la Organización</label>
+                    {{ form.nombre_organizacion }}
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Nombre Admin</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Apellidos</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico (Usuario Root)</label>
+                    {{ form.email }}
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Contraseña</label>
+                        {{ form.password1 }}
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Confirmar</label>
+                        {{ form.password2 }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-rocket"></i> Registrar Organización
+                </button>
+            </form>
+
+            <div class="login-link">
+                ¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia Sesión aquí</a>
+            </div>
+        </div>
+
+        <!-- Derecha: Info -->
+        <div class="login-right">
+            <h1>Impulsa tu Negocio</h1>
+            <p style="opacity: 0.9; margin-top: 15px; line-height: 1.6;">
+                Nuestra plataforma te ofrece las herramientas necesarias para escalar tu operación de manera segura y eficiente.
+            </p>
+            
+            <ul class="features">
+                <li>
+                    <div class="feature-icon"><i class="fas fa-building"></i></div>
+                    <span>Gestión Multi-Usuario Centralizada</span>
+                </li>
+                <li>
+                    <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                    <span>Reportes y Métricas en Tiempo Real</span>
+                </li>
+                <li>
+                    <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                    <span>Seguridad Empresarial</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

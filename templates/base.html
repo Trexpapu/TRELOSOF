@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CONTROL ZL{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --primary-dark: #0f172a;
+            --secondary-dark: #1e293b;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-teal: #0d9488;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --card-bg: rgba(30, 41, 59, 0.8);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: var(--text-light);
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--secondary-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.5rem 0;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.5rem 1rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 50px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-blue) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Hamburger Menu for Mobile */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 4px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-light);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-blue);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .nav-menu {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 1rem;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-menu {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                flex-direction: column;
+                background: var(--secondary-dark);
+                width: 100%;
+                height: calc(100vh - 70px);
+                padding: 2rem;
+                transition: 0.3s;
+                overflow-y: auto;
+            }
+
+            .nav-menu.active {
+                left: 0;
+            }
+
+            .dropdown-menu {
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                border: none;
+                box-shadow: none;
+                background: rgba(0, 0, 0, 0.2);
+                margin-top: 0.5rem;
+                margin-left: 1rem;
+            }
+
+            .user-menu {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-top: 2rem;
+                width: 100%;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 1.5rem;
+                text-align: center;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{% url 'index' %}" class="logo">
+                <div class="logo-icon">AM</div>
+                <div class="logo-text">TRE BANKS</div>
+            </a>
+
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="{% url 'index' %}" class="nav-link active">
+                        <i class="fas fa-home"></i> Inicio
+                    </a>
+                </li>
+                
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">
+                        <i class="fas fa-money-bill"></i> Cartera
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'calendario-financiero' %}" class="dropdown-item">Panel</a>
+                        <a href="{% url 'lista-facturas' %}" class="dropdown-item">Facturas</a>
+                        <a href="{% url 'lista-ventas' %}" class="dropdown-item">Ventas</a>
+                        <a href="{% url 'lista-movimientos' %}" class="dropdown-item">Movimientos</a>
+                    </div>
+                </li>
+                
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">
+                        <i class="fa-solid fa-store"></i> Sucursales
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'lista-sucursales' %}" class="dropdown-item">Sucursales</a>
+                        <a href="{% url 'lista-proveedores' %}" class="dropdown-item">Proveedores</a>
+                        <a href="{% url 'ver-cuenta-maestra' %}" class="dropdown-item">Cuenta Maestra</a>
+                    </div>
+                    
+                </li>
+                
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">
+                        <i class="fas fa-chart-bar"></i> Reportes
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'reporte-ventas-sucursal' %}" class="dropdown-item">Ventas</a>
+                        <a href="{% url 'reporte-facturas' %}" class="dropdown-item">Facturas</a>
+                        <a href="{% url 'reporte-movimientos' %}" class="dropdown-item">Movimientos</a>
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">
+                        <i class="fas fa-tools"></i> Herramientas
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'herramienta-tabulador' %}" class="dropdown-item">Tabulador</a>
+                        <a href="#" onclick="openAjusteModal(); return false;" class="dropdown-item">Ajuste de Saldo</a>
+                    </div>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="{% url 'configuracion-index' %}" class="nav-link">
+                        <i class="fas fa-cog"></i> Configuración
+                    </a>
+                </li>
+                
+                {% if user.is_organizacion_admin %}
+                <li class="nav-item">
+                    <a href="{% url 'users-list' %}" class="nav-link">
+                        <i class="fas fa-users"></i> Usuarios
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item user-menu">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                        <div class="user-name">
+                            {{ user.first_name }} {{ user.last_name }}
+                        </div>
+                    </div>
+                    <a href="{% url 'logout' %}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- ===== TOAST MESSAGES GLOBAL ===== -->
+    {% if messages %}
+    <div id="toast-container" style="
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-width: 400px;
+        pointer-events: none;
+    ">
+        {% for message in messages %}
+        <div class="global-toast global-toast--{{ message.tags }}" style="
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 1rem 1.25rem;
+            border-radius: 14px;
+            backdrop-filter: blur(12px);
+            pointer-events: all;
+            animation: toastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            border: 1px solid;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            {% if message.tags == 'success' %}
+            background: rgba(16,185,129,0.15);
+            border-color: rgba(16,185,129,0.4);
+            color: #34d399;
+            {% elif message.tags == 'error' or message.tags == 'danger' %}
+            background: rgba(239,68,68,0.15);
+            border-color: rgba(239,68,68,0.4);
+            color: #f87171;
+            {% elif message.tags == 'warning' %}
+            background: rgba(245,158,11,0.15);
+            border-color: rgba(245,158,11,0.4);
+            color: #fbbf24;
+            {% else %}
+            background: rgba(59,130,246,0.15);
+            border-color: rgba(59,130,246,0.4);
+            color: #60a5fa;
+            {% endif %}
+            font-size: 0.95rem;
+            font-weight: 500;
+        ">
+            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}fa-times-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}" style="font-size:1.2rem; flex-shrink:0;"></i>
+            <span style="flex:1;">{{ message }}</span>
+            <button onclick="this.closest('.global-toast').remove()" style="
+                background: none; border: none; cursor: pointer; opacity: 0.7;
+                color: inherit; padding: 0; font-size: 1rem; line-height:1;
+            " title="Cerrar"><i class="fas fa-times"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    <style>
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(100%) scale(0.85); }
+            to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+    </style>
+    <script>
+        // Auto-dismiss toasts after 4 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.global-toast').forEach(function(toast, i) {
+                setTimeout(function() {
+                    toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(function() { toast.remove(); }, 400);
+                }, 4000 + i * 300);
+            });
+        });
+    </script>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">{{ user.organizacion.nombre|default:"TRE BANKS" }} © {% now "Y" %}</div>
+            <div class="footer-links">
+                <a href="{% url 'terminos_condiciones' %}" class="footer-link">Términos y Condiciones</a>
+                <a href="{% url 'politicas_privacidad' %}" class="footer-link">Política de Privacidad</a>
+                <a href="mailto:trexteasterpro@gmail.com" class="footer-link">Soporte</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Toggle
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('navMenu');
+        
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            
+            // Animate hamburger to X
+            const spans = hamburger.querySelectorAll('span');
+            if (hamburger.classList.contains('active')) {
+                spans[0].style.transform = 'rotate(45deg) translate(6px, 6px)';
+                spans[1].style.opacity = '0';
+                spans[2].style.transform = 'rotate(-45deg) translate(6px, -6px)';
+            } else {
+                spans[0].style.transform = 'none';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'none';
+            }
+        });
+
+        // Close menu when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    const spans = hamburger.querySelectorAll('span');
+                    spans[0].style.transform = 'none';
+                    spans[1].style.opacity = '1';
+                    spans[2].style.transform = 'none';
+                }
+            }
+        });
+
+        // Update active nav link
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+
+        // Dropdown menu on mobile
+        if (window.innerWidth <= 768) {
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const dropdown = toggle.closest('.dropdown');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    
+                    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                });
+            });
+        }
+    </script>
+    
+    <!-- Ajuste Saldo Modal -->
+    <div id="ajusteModal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div class="modal-content" style="background-color: #1e293b; color: #f8fafc; padding: 2rem; border-radius: 12px; border: 1px solid #334155; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin: 0; font-size: 1.5rem; color: #f8fafc;">Ajuste de Saldo</h2>
+                <span onclick="closeAjusteModal()" style="color: #94a3b8; font-size: 1.5rem; font-weight: bold; cursor: pointer;">&times;</span>
+            </div>
+            <form method="post" action="{% url 'crear-ajuste-saldo' %}">
+                {% csrf_token %}
+                <div style="margin-bottom: 1rem;">
+                    <label for="fecha" style="display: block; margin-bottom: 0.5rem; color: #94a3b8;">Fecha del Ajuste</label>
+                    <input type="date" name="fecha" id="ajusteFecha" required style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f8fafc; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="monto" style="display: block; margin-bottom: 0.5rem; color: #94a3b8;">Monto</label>
+                    <input type="number" name="monto" step="0.01" required placeholder="0.00" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f8fafc; font-size: 1rem;" autocapitalize="off">
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="descripcion" style="display: block; margin-bottom: 0.5rem; color: #94a3b8;">Descripción (Opcional)</label>
+                    <input type="text" name="descripcion" placeholder="Motivo del ajuste..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f8fafc; font-size: 1rem;" autocomplete="off">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" name="tipo" value="SUMAR" style="flex: 1; padding: 0.75rem; border: none; border-radius: 8px; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                        <i class="fas fa-plus"></i> Sumar
+                    </button>
+                    <button type="submit" name="tipo" value="RESTAR" style="flex: 1; padding: 0.75rem; border: none; border-radius: 8px; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                        <i class="fas fa-minus"></i> Restar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function openAjusteModal() {
+            document.getElementById("ajusteModal").style.display = "flex";
+            // Default to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("ajusteFecha").value = today;
+        }
+        function closeAjusteModal() {
+            document.getElementById("ajusteModal").style.display = "none";
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById("ajusteModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

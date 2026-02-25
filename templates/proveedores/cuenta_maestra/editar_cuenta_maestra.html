@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Editar Cuenta Maestra - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+
+    .form-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title i {
+        color: var(--accent-blue);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .required::after {
+        content: " *";
+        color: #ef4444;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .error-message {
+        color: #f87171;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-submit {
+        flex: 1;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-cancel {
+        padding: 1rem 1.5rem;
+        background: rgba(30, 41, 59, 0.5);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    .success-message {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #bbf7d0;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .current-info {
+        background: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-light);
+    }
+
+    .current-info-title {
+        font-weight: 600;
+        color: var(--accent-blue);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    @media (max-width: 768px) {
+        .edit-container {
+            padding: 0 0.5rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .form-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="page-header">
+        <h1 class="page-title">Editar Cuenta Maestra</h1>
+        <p class="page-subtitle">Actualice la información de la cuenta maestra</p>
+    </div>
+
+
+    <div class="form-card">
+        <div class="current-info">
+            <div class="current-info-title">
+                <i class="fas fa-info-circle"></i>
+                Detalles actuales:
+            </div>
+            <div><strong>{{ cuenta.nombre }}</strong></div>
+            {% if cuenta.telefono %}
+                <div>Teléfono: {{ cuenta.telefono }}</div>
+            {% endif %}
+            {% if cuenta.email %}
+                <div>Email: {{ cuenta.email }}</div>
+            {% endif %}
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <!-- Sección de Información Básica -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-building"></i>
+                    Información de la Cuenta
+                </h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label required">
+                            Nombre
+                        </label>
+                        {{ form.nombre|add_class:"form-control"|attr:"placeholder:Nombre de la cuenta maestra" }}
+                        {% if form.nombre.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.nombre.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.telefono.id_for_label }}" class="form-label">
+                            Teléfono
+                        </label>
+                        {{ form.telefono|add_class:"form-control"|attr:"placeholder:Teléfono de contacto" }}
+                        {% if form.telefono.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.telefono.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">
+                            Correo Electrónico
+                        </label>
+                        {{ form.email|add_class:"form-control"|attr:"placeholder:correo@empresa.com" }}
+                        {% if form.email.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Información Bancaria -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="fas fa-university"></i>
+                    Información Bancaria
+                </h3>
+                
+                <div class="form-group">
+                    <label for="{{ form.cuenta.id_for_label }}" class="form-label">
+                        Datos de Cuenta Bancaria
+                    </label>
+                    {{ form.cuenta|add_class:"form-control form-textarea"|attr:"placeholder:Información de cuenta, CLABE, banco, etc."|attr:"rows:4" }}
+                    {% if form.cuenta.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.cuenta.errors|join:", " }}
+                        </div>
+                    {% endif %}
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Incluya información como número de cuenta, CLABE, nombre del banco y cualquier detalle relevante.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errores del formulario completo -->
+            {% if form.non_field_errors %}
+                <div class="error-message" style="margin-top: 1rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{ form.non_field_errors|join:", " }}
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <a href="{% url 'ver-cuenta-maestra' %}" class="btn-cancel">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-save"></i>
+                    Actualizar Cuenta Maestra
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const emailField = document.getElementById('{{ form.email.id_for_label }}');
+        if (emailField) {
+            emailField.addEventListener('blur', function() {
+                const email = this.value;
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if (email && !emailPattern.test(email)) {
+                    this.classList.add('is-invalid');
+                    let errorDiv = this.nextElementSibling;
+                    if (!errorDiv || !errorDiv.classList.contains('error-message')) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Por favor ingrese un correo electrónico válido';
+                        this.parentNode.insertBefore(errorDiv, this.nextElementSibling);
+                    }
+                } else {
+                    this.classList.remove('is-invalid');
+                    const errorDiv = this.nextElementSibling;
+                    if (errorDiv && errorDiv.classList.contains('error-message')) {
+                        errorDiv.remove();
+                    }
+                }
+            });
+        }
+
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const nombreField = document.getElementById('{{ form.nombre.id_for_label }}');
+            if (!nombreField.value.trim()) {
+                e.preventDefault();
+                alert('El nombre es obligatorio.');
+                nombreField.focus();
+                return false;
+            }
+            return true;
+        });
+    });
+</script>
+{% endblock %}

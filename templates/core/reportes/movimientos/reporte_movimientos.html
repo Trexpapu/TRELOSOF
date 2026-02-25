@@ -1,0 +1,525 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Reporte de Movimientos - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos Glassmorphism reutilizados */
+    .report-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .report-header {
+        background: rgba(15, 23, 42, 0.8);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+        background: rgba(30, 41, 59, 0.7);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        background: rgba(30, 41, 59, 0.9);
+    }
+
+    .kpi-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+
+    .kpi-content {
+        flex: 1;
+    }
+
+    .kpi-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #f8fafc;
+    }
+
+    .kpi-label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+
+    /* Gráficas */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1024px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-container {
+        background: rgba(30, 41, 59, 0.7);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Tabla */
+    .table-container {
+        background: rgba(30, 41, 59, 0.7);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .data-table th {
+        background: rgba(15, 23, 42, 0.8);
+        padding: 1rem;
+        text-align: left;
+        color: #94a3b8;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #e2e8f0;
+    }
+
+    .data-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Filtros */
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .form-control {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        color: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #8b5cf6;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 46px; /* Match input height */
+    }
+
+    .btn-update:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Badges */
+    .badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+        text-transform: uppercase;
+    }
+
+    .badge-ingreso { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-pago { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-cargo { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-ajuste_suma, .badge-ajuste_resta { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="report-header">
+        <h1 style="color: #f8fafc; font-size: 1.8rem; margin: 0;">
+            <i class="fas fa-exchange-alt" style="color: #8b5cf6; margin-right: 0.5rem;"></i>
+            Reporte de Movimientos de Cartera
+        </h1>
+        
+        <form method="POST" class="filter-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin|date:'Y-m-d' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tipo Movimiento</label>
+                <select name="origen" class="form-control">
+                    <option value="">Todos</option>
+                    {% for val, label in origenes_list %}
+                    <option value="{{ val }}" {% if origen_actual == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Sucursal (Ingresos)</label>
+                <select name="sucursal" class="form-control">
+                    <option value="">Todas</option>
+                    {% for s in sucursales_list %}
+                    <option value="{{ s.id }}" {% if sucursal_actual == s.id %}selected{% endif %}>{{ s.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Proveedor (Pagos/Cargos)</label>
+                <select name="proveedor" class="form-control">
+                    <option value="">Todos</option>
+                    {% for p in proveedores_list %}
+                    <option value="{{ p.id }}" {% if proveedor_actual == p.id %}selected{% endif %}>{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn-update">
+                <i class="fas fa-filter margin-right-2"></i> Filtrar
+            </button>
+        </form>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">${{ total_ingresos|floatformat:2|intcomma }}</div>
+                <div class="kpi-label">Total Ingresos</div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">${{ total_pagos|floatformat:2|intcomma }}</div>
+                <div class="kpi-label">Total Pagos</div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value">${{ total_cargos|floatformat:2|intcomma }}</div>
+                <div class="kpi-label">Nuevos Cargos (Deuda)</div>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon-wrapper" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="kpi-content">
+                <div class="kpi-value" style="color: {% if balance_neto >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                    ${{ balance_neto|floatformat:2|intcomma }}
+                </div>
+                <div class="kpi-label">Flujo Neto (Incl. Ajustes)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Evolución Diaria</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Ingresos por Sucursal</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="sucursalChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Pagos por Proveedor (Top 10)</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="proveedorChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Cargos por Proveedor (Top 10)</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="cargosChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Detallada -->
+    <div class="table-container">
+        <h3 style="color: #f8fafc; margin-bottom: 1.5rem;">Últimos Movimientos (Detalle)</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Concepto</th>
+                    <th>Entidad</th>
+                    <th>Estado / Saldo</th>
+                    <th style="text-align: right;">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in detalles %}
+                <tr>
+                    <td style="color: #94a3b8;">{{ mov.fecha|date:"d M Y" }}</td>
+                    <td>
+                        <span class="badge badge-{{ mov.origen|lower }}">
+                            {{ mov.get_origen_display }}
+                        </span>
+                    </td>
+                    <td>{{ mov.descripcion }}</td>
+                    <td>
+                        {% if mov.factura %}
+                            <span style="color: #a5b4fc; font-weight: 500;">{{ mov.factura.proveedor.nombre }}</span>
+                            <div style="font-size: 0.8rem; color: #64748b;">Folio: {{ mov.factura.folio|default:'--' }}</div>
+                        {% elif mov.venta %}
+                            <span style="color: #a5b4fc; font-weight: 500;">{{ mov.venta.sucursal.nombre }}</span>
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td>
+                         {% if mov.factura %}
+                            <div style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 2px;">
+                                Estado: {{ mov.factura.get_estado_display }}
+                            </div>
+                            {% if mov.monto_restante_factura is not None %}
+                                <div style="font-size: 0.85rem; color: #f43f5e; font-weight: 600;">
+                                    Restan: ${{ mov.monto_restante_factura|floatformat:2|intcomma }}
+                                </div>
+                            {% endif %}
+                         {% else %}
+                            <span style="color: #64748b;">--</span>
+                         {% endif %}
+                    </td>
+                    <td style="text-align: right; font-weight: 700; color: #f8fafc;">
+                        ${{ mov.monto|floatformat:2|intcomma }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">
+                        No se encontraron movimientos en este periodo.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { labels: { color: '#94a3b8' } }
+        },
+        scales: {
+            y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#94a3b8' }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#94a3b8' }
+            }
+        }
+    };
+
+    // 1. Timeline Chart (Line/Bar Combo)
+    const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+    new Chart(ctxTimeline, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_timeline_labels|safe }},
+            datasets: [
+                {
+                    label: 'Ingresos',
+                    data: {{ chart_timeline_ingresos|safe }},
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Pagos',
+                    data: {{ chart_timeline_pagos|safe }},
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: '#10b981',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: commonOptions
+    });
+
+    // Opciones específicas para gráficas horizontales
+    const horizontalOptions = {
+        ...commonOptions,
+        indexAxis: 'y',
+        scales: {
+            x: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#94a3b8' }
+            },
+            y: {
+                grid: { display: false },
+                ticks: { color: '#94a3b8' }
+            }
+        }
+    };
+
+    // 2. Sucursal Chart (Doughnut)
+    new Chart(document.getElementById('sucursalChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_sucursal_labels|safe }},
+            datasets: [{
+                data: {{ chart_sucursal_data|safe }},
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.6)',
+                    'rgba(16, 185, 129, 0.6)',
+                    'rgba(245, 158, 11, 0.6)',
+                    'rgba(239, 68, 68, 0.6)',
+                    'rgba(139, 92, 246, 0.6)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#94a3b8' } }
+            }
+        }
+    });
+
+    // 3. Proveedor Chart (Pagos)
+    new Chart(document.getElementById('proveedorChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_proveedor_labels|safe }},
+            datasets: [{
+                label: 'Total Pagado',
+                data: {{ chart_proveedor_data|safe }},
+                backgroundColor: 'rgba(16, 185, 129, 0.6)', // Greenish for payments
+                borderColor: '#10b981',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: horizontalOptions
+    });
+
+    // 4. Cargos Chart (Nuevos)
+    new Chart(document.getElementById('cargosChart'), {
+        type: 'bar', // Horizontal bar due to options
+        data: {
+            labels: {{ chart_cargos_labels|safe }},
+            datasets: [{
+                label: 'Total Cargos',
+                data: {{ chart_cargos_data|safe }},
+                backgroundColor: 'rgba(239, 68, 68, 0.6)', // Reddish for debt
+                borderColor: '#ef4444',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: horizontalOptions
+    });
+
+
+});
+</script>
+{% endblock %}

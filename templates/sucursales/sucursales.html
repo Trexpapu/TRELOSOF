@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% block title %}Sucursales - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para sucursales - Similar a proveedores */
+    .header-section {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    /* TÍTULO CON ESTILO DE SUCURSALES (azul-morado) */
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-title i {
+        font-size: 2.2rem;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* BOTÓN CON ESTILO DE PROVEEDORES */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .table-container {
+        background: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    /* TABLA CON DISEÑO DE GRID COMO PROVEEDORES */
+    .table-header {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr;
+        padding: 1rem 1.5rem;
+        background: rgba(15, 23, 42, 0.5);
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+        color: var(--accent-blue);
+    }
+
+    .table-row {
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .table-row:hover {
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .table-row:last-child {
+        border-bottom: none;
+    }
+
+    .cell {
+        display: flex;
+        align-items: center;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        padding: 0.5rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+    }
+
+    .btn-edit:hover {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+    }
+
+    .btn-delete:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: #ef4444;
+        color: #fca5a5;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+
+    .page-link {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-light);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+    }
+
+    .page-link.active {
+        background: var(--accent-blue);
+        border-color: var(--accent-blue);
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border: 1px solid;
+    }
+
+    .alert-success {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: rgba(34, 197, 94, 0.3);
+        color: #86efac;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+
+    @media (max-width: 768px) {
+        .table-header {
+            display: none;
+        }
+        
+        .table-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .cell::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-right: 0.5rem;
+            min-width: 100px;
+        }
+        
+        .actions {
+            justify-content: flex-start;
+            margin-top: 1rem;
+        }
+        
+        .header-section {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h1 class="page-title">
+        <i class="fas fa-store"></i> Sucursales
+    </h1>
+    <a href="{% url 'crear-sucursal' %}" class="btn-primary">
+        <i class="fas fa-plus"></i> Nueva Sucursal
+    </a>
+</div>
+
+
+<div class="table-container">
+    {% if sucursales %}
+        <div class="table-header">
+            <div class="cell">Nombre</div>
+            <div class="cell">Dirección</div>
+            <div class="cell">Acciones</div>
+        </div>
+        
+        {% for sucursal in sucursales %}
+            <div class="table-row">
+                <div class="cell" data-label="Nombre">
+                    <div>
+                        <div class="detail-primary">{{ sucursal.nombre }}</div>
+                    </div>
+                </div>
+                <div class="cell" data-label="Dirección">
+                    <span class="detail-secondary">{{ sucursal.direccion }}</span>
+                </div>
+                <div class="cell actions" data-label="Acciones">
+                    <a href="{% url 'editar-sucursal' sucursal.id %}" class="btn-icon btn-edit" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="post"
+                        action="{% url 'eliminar-sucursal' sucursal.id %}"
+                        style="display:inline;"
+                        onsubmit="return confirm('¿Estás seguro de eliminar esta sucursal? Esta acción no se puede deshacer.');">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="btn-icon btn-delete"
+                                title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <h3>No hay sucursales registradas</h3>
+            <p>Comienza agregando tu primera sucursal.</p>
+            <a href="{% url 'crear-sucursal' %}" class="btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-plus"></i> Agregar Sucursal
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="page-link">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        {% endif %}
+        
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="page-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="page-link">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

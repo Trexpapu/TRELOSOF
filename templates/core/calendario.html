@@ -1,0 +1,1012 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendario Financiero - Abarrotera Morelia{% endblock %}
+{% load humanize %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    :root {
+        --primary-dark: #0f172a;
+        --secondary-dark: #1e293b;
+        --accent-blue: #3b82f6;
+        --accent-purple: #8b5cf6;
+        --accent-red: #ef4444;
+        --accent-green: #10b981;
+        --accent-teal: #0d9488;
+        --accent-gold: #f59e0b;
+        --text-light: #f8fafc;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+        --card-bg: rgba(30, 41, 59, 0.8);
+    }
+
+    .calendar-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* Header */
+    .calendar-header {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .calendar-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .calendar-nav {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .nav-btn {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .nav-btn:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
+
+    .current-month {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-light);
+        min-width: 200px;
+        text-align: center;
+    }
+
+    /* Filtro de búsqueda */
+    .search-filter {
+        background: rgba(30, 41, 59, 0.8);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .filter-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .filter-title i {
+        color: var(--accent-gold);
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .filter-input {
+        flex: 1;
+        padding: 0.875rem 1rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--accent-gold);
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+
+    .filter-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .btn-search {
+        padding: 0.875rem 1.5rem;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, #d97706 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-clear {
+        padding: 0.875rem 1.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-clear:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+    }
+
+    /* Resultados de búsqueda */
+    .search-results {
+        background: rgba(15, 23, 42, 0.8);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .results-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .results-title i {
+        color: var(--accent-gold);
+    }
+
+    .results-count {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--accent-gold);
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .factura-item {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .factura-item:hover {
+        background: rgba(30, 41, 59, 0.8);
+        transform: translateX(5px);
+    }
+
+    .factura-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .factura-folio {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-light);
+    }
+
+    .factura-proveedor {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .fechas-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .fecha-badge {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--accent-gold);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .fecha-badge i {
+        font-size: 0.9rem;
+    }
+
+    .fecha-monto {
+        margin-left: 0.5rem;
+        font-weight: 600;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+
+    .no-results i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-card.saldo {
+        border-left: 4px solid var(--accent-blue);
+    }
+
+    .stat-card.cargos {
+        border-left: 4px solid var(--accent-red);
+    }
+
+    .stat-card.facturas {
+        border-left: 4px solid var(--accent-purple);
+    }
+
+    .stat-card.ventas {
+        border-left: 4px solid var(--accent-green);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon.saldo {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--accent-blue);
+    }
+
+    .stat-icon.cargos {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--accent-red);
+    }
+
+    .stat-icon.facturas {
+        background: rgba(139, 92, 246, 0.1);
+        color: var(--accent-purple);
+    }
+
+    .stat-icon.ventas {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent-green);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        word-break: break-word; /* Allow break for very long numbers */
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* Calendar Grid */
+    .calendar-grid {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        background: rgba(30, 41, 59, 0.95);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .weekday {
+        padding: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+        color: var(--text-light);
+        border-right: 1px solid var(--border-color);
+    }
+
+    .weekday:last-child {
+        border-right: none;
+    }
+
+    .calendar-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        grid-auto-rows: minmax(140px, auto);
+    }
+
+    .calendar-day {
+        min-height: 140px;
+        height: auto;
+        border-right: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.75rem;
+        position: relative;
+        transition: all 0.3s ease;
+        background: rgba(15, 23, 42, 0.5);
+        overflow: visible;
+    }
+
+    .calendar-day:hover {
+        background: rgba(59, 130, 246, 0.05);
+        transform: scale(1.02);
+        z-index: 1;
+    }
+
+    .calendar-day.empty {
+        background: rgba(30, 41, 59, 0.3);
+    }
+
+    .calendar-day.today {
+        background: rgba(59, 130, 246, 0.1);
+        border: 2px solid var(--accent-blue);
+    }
+
+    /* Días con facturas filtradas */
+    .calendar-day.highlighted {
+        background: rgba(245, 158, 11, 0.1);
+        border: 2px solid var(--accent-gold);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+        }
+    }
+
+    .day-number {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+        border-radius: 8px;
+        background: rgba(30, 41, 59, 0.8);
+    }
+
+    .calendar-day.today .day-number {
+        background: var(--accent-blue);
+        color: white;
+    }
+
+    .calendar-day.highlighted .day-number {
+        background: var(--accent-gold);
+        color: white;
+    }
+
+    /* Day Content */
+    .day-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .day-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .day-item:hover {
+        transform: translateX(5px);
+    }
+
+    .day-item.facturas {
+        background: rgba(139, 92, 246, 0.1);
+        color: #a78bfa;
+        border-left: 3px solid var(--accent-purple);
+    }
+
+    .day-item.ventas {
+        background: rgba(16, 185, 129, 0.1);
+        color: #4ade80;
+        border-left: 3px solid var(--accent-green);
+    }
+
+    .day-item.highlight {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border-left: 3px solid var(--accent-gold);
+        font-weight: 600;
+    }
+
+    .day-item.saldo-inicial {
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+        border-left: 3px solid var(--accent-blue);
+    }
+
+    .item-icon {
+        font-size: 0.9rem;
+    }
+
+    .item-amount {
+        font-weight: 600;
+        /* margin-left: auto; Removed to allow justify-content: space-between to handle it */
+    }
+
+    .day-total {
+        position: absolute;
+        bottom: 0.5rem;
+        left: 0.75rem;
+        right: 0.75rem;
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 6px;
+        padding: 0.5rem;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--text-light);
+        font-weight: 600;
+        border: 1px solid var(--border-color);
+    }
+
+    .day-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .highlight-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        z-index: 2;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
+
+    .action-btn.primary {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        border: none;
+    }
+
+    .action-btn.primary:hover {
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .calendar-day {
+            min-height: 120px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .calendar-container {
+            padding: 0 0.5rem;
+        }
+        
+        .calendar-day {
+            min-height: 100px;
+            padding: 0.5rem;
+        }
+        
+        .day-item {
+            font-size: 0.65rem;
+            padding: 0.25rem;
+        }
+        
+        .weekday {
+            padding: 1rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .quick-actions {
+            flex-direction: column;
+        }
+        
+        .filter-form {
+            flex-direction: column;
+        }
+        
+        .filter-input,
+        .btn-search,
+        .btn-clear {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .calendar-day {
+            min-height: 80px;
+        }
+        
+        .day-number {
+            font-size: 1rem;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+    <!-- Header -->
+    <div class="calendar-header">
+        <div class="header-top">
+            <h1 class="calendar-title">Calendario Financiero</h1>
+            <div class="calendar-nav">
+                <a href="?year={{ anio_anterior }}&month={{ mes_anterior }}{% if folio_busqueda %}&folio={{ folio_busqueda }}{% endif %}" class="nav-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <div class="current-month">{{ month_name }} {{ year }}</div>
+                <a href="?year={{ anio_siguiente }}&month={{ mes_siguiente }}{% if folio_busqueda %}&folio={{ folio_busqueda }}{% endif %}" class="nav-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="?{% if folio_busqueda %}folio={{ folio_busqueda }}{% endif %}" class="nav-btn" title="Ir al mes actual">
+                    <i class="fas fa-calendar-day"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Filtro de búsqueda -->
+        <div class="search-filter">
+            <h3 class="filter-title">
+                <i class="fas fa-search"></i>
+                Buscar Factura por Folio
+            </h3>
+            <form method="get" class="filter-form">
+                <input type="hidden" name="year" value="{{ year }}">
+                <input type="hidden" name="month" value="{{ month }}">
+                <input type="text" 
+                       name="folio" 
+                       value="{{ folio_busqueda }}" 
+                       placeholder="Ingresa el folio de la factura..." 
+                       class="filter-input">
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i>
+                    Buscar
+                </button>
+                {% if folio_busqueda %}
+                <a href="?year={{ year }}&month={{ month }}" class="btn-clear">
+                    <i class="fas fa-times"></i>
+                    Limpiar
+                </a>
+                {% endif %}
+            </form>
+        </div>
+        
+        <!-- Resultados de búsqueda -->
+        {% if folio_busqueda %}
+        <div class="search-results">
+            <div class="results-header">
+                <h4 class="results-title">
+                    <i class="fas fa-file-invoice"></i>
+                    Resultados de búsqueda: "{{ folio_busqueda }}"
+                </h4>
+                <span class="results-count">{{ fechas_factura_filtrada|length }} fecha(s) encontrada(s)</span>
+            </div>
+            
+            {% if facturas_filtradas %}
+                {% for factura in facturas_filtradas %}
+                <div class="factura-item">
+                    <div class="factura-header">
+                        <div>
+                            <div class="factura-folio">
+                                Folio: {{ factura.folio|default:"Sin folio" }}
+                            </div>
+                            <div class="factura-proveedor">
+                                Proveedor: {{ factura.proveedor.nombre }}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-{{ factura.estado|lower }}" style="padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.8rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                {{ factura.get_estado_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="fechas-list">
+                        {% for fecha_filtro in fechas_factura_filtrada %}
+                            {% if fecha_filtro.factura_id == factura.id %}
+                            <div class="fecha-badge">
+                                <i class="fas fa-calendar-day"></i>
+                                {{ fecha_filtro.fecha|date:"d/m/Y" }}
+                                <span class="fecha-monto">${{ fecha_filtro.monto_por_pagar|floatformat:2 }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <h3>No se encontraron facturas con el folio "{{ folio_busqueda }}"</h3>
+                    <p>Intenta con otro folio o verifica el número</p>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card saldo">
+                <div class="stat-icon saldo">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="stat-value">${{ saldo_total|floatformat:2|intcomma }}</div>
+                <div class="stat-label">Saldo Total</div>
+            </div>
+            
+            <div class="stat-card cargos">
+                <div class="stat-icon cargos">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div class="stat-value">${{ cargo_total|floatformat:2|intcomma }}</div>
+                <div class="stat-label">Cargo Total</div>
+            </div>
+            
+            <div class="stat-card facturas">
+                <div class="stat-icon facturas">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-value">${{ total_facturas_mes|floatformat:2|intcomma }}</div>
+                <div class="stat-label">Cargo por Factura del Mes</div>
+            </div>
+            
+            <div class="stat-card ventas">
+                <div class="stat-icon ventas">
+                    <i class="fas fa-store"></i>
+                </div>
+                <div class="stat-value">${{ total_ventas_mes|floatformat:2|intcomma }}</div>
+                <div class="stat-label">Ventas del Mes</div>
+            </div>
+
+            <!-- New Card: Total Pagos del Mes -->
+            <div class="stat-card pagos" style="border-left: 4px solid var(--accent-teal);">
+                <div class="stat-icon pagos" style="background: rgba(13, 148, 136, 0.1); color: var(--accent-teal);">
+                    <i class="fas fa-money-check-alt"></i>
+                </div>
+                <div class="stat-value">${{ total_pagos_realizados_mes|floatformat:2|intcomma }}</div>
+                <div class="stat-label">Pagos Realizados en el Mes</div>
+            </div>
+
+            <!-- New Card: Cuota Diaria Necesaria -->
+            <div class="stat-card daily" style="border-left: 4px solid var(--accent-gold);">
+                <div class="stat-icon daily" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-gold);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-value">${{ cuota_diaria_necesaria|floatformat:2|intcomma }}</div>
+                <div class="stat-label">Cuota Diaria (Meta)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid">
+        <!-- Weekdays -->
+        <div class="weekdays">
+            {% for dia in dias_semana %}
+            <div class="weekday">{{ dia }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- Days -->
+        <div class="calendar-days">
+            {% for semana in dias_del_mes %}
+                {% for dia in semana %}
+                    {% if dia %}
+                        <div class="calendar-day 
+                                    {% if dia.es_hoy %}today{% endif %} 
+                                    {% if dia.tiene_factura_filtrada %}highlighted{% endif %}" 
+                             onclick="window.location.href='{% url 'detalle-dia' dia.fecha|date:'Y-m-d' %}'">
+                            <div class="day-number">{{ dia.dia }}</div>
+                            
+                            {% if dia.facturas_pendientes > 0 %}
+                            <div class="day-badge">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ dia.facturas_pendientes }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if dia.tiene_factura_filtrada %}
+                            <div class="highlight-badge">
+                                <i class="fas fa-star"></i>
+                                {{ dia.fechas_filtro|length }}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="day-content">
+                                {% if dia.total_facturas > 0 %}
+                                <div class="day-item facturas">
+                                    <i class="fas fa-calendar-check item-icon"></i>
+                                    <span>Cargos por Factura</span>
+                                    <span class="item-amount">${{ dia.total_facturas|floatformat:0|intcomma }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                {% if dia.total_ventas > 0 %}
+                                <div class="day-item ventas">
+                                    <i class="fas fa-cash-register item-icon"></i>
+                                    <span>Ventas</span>
+                                    <span class="item-amount">${{ dia.total_ventas|floatformat:0|intcomma }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="day-item saldo-inicial" title="Saldo Inicial">
+                                    <i class="fas fa-wallet item-icon"></i>
+                                    <span>Saldo Inicial</span>
+                                    <span class="item-amount">${{ dia.saldo_dia|floatformat:2|intcomma }}</span>
+                                </div>
+                                
+                                {% if dia.tiene_factura_filtrada %}
+                                    {% for fecha_filtro in dia.fechas_filtro %}
+                                    <div class="day-item highlight">
+                                        <i class="fas fa-file-invoice-dollar item-icon"></i>
+                                        <span>Factura: {{ fecha_filtro.folio|truncatechars:15 }}</span>
+                                        <span class="item-amount">${{ fecha_filtro.monto_por_pagar|floatformat:0 }}</span>
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            
+                            
+                        </div>
+                    {% else %}
+                        <div class="calendar-day empty"></div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'lista-facturas' %}" class="action-btn">
+            <i class="fas fa-file-invoice"></i>
+            Ver Todas las Facturas
+        </a>
+        <a href="{% url 'reporte-ventas-sucursal' %}" class="action-btn">
+            <i class="fas fa-chart-line"></i>
+            Ver Reporte de Ventas
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tooltips para los días
+        const calendarDays = document.querySelectorAll('.calendar-day:not(.empty)');
+        calendarDays.forEach(day => {
+            day.addEventListener('mouseenter', function() {
+                this.style.cursor = 'pointer';
+                this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.3)';
+            });
+            
+            day.addEventListener('mouseleave', function() {
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Animación para stats
+        const statsCards = document.querySelectorAll('.stat-card');
+        statsCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Auto-enfocar el campo de búsqueda si hay folio_busqueda
+        const searchInput = document.querySelector('input[name="folio"]');
+        if (searchInput && searchInput.value) {
+            searchInput.focus();
+            searchInput.select();
+        }
+
+        // Shortcut para teclado
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + F: enfocar campo de búsqueda
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+            // Ctrl + flecha izquierda: mes anterior
+            if (e.ctrlKey && e.key === 'ArrowLeft') {
+                window.location.href = '?year={{ anio_anterior }}&month={{ mes_anterior }}{% if folio_busqueda %}&folio={{ folio_busqueda }}{% endif %}';
+            }
+            // Ctrl + flecha derecha: mes siguiente
+            if (e.ctrlKey && e.key === 'ArrowRight') {
+                window.location.href = '?year={{ anio_siguiente }}&month={{ mes_siguiente }}{% if folio_busqueda %}&folio={{ folio_busqueda }}{% endif %}';
+            }
+            // Hoy: Ctrl + T
+            if (e.ctrlKey && e.key === 't') {
+                window.location.href = '?{% if folio_busqueda %}folio={{ folio_busqueda }}{% endif %}';
+            }
+            // Escape: limpiar búsqueda si está activa
+            if (e.key === 'Escape' && searchInput && searchInput.value) {
+                window.location.href = '?year={{ year }}&month={{ month }}';
+            }
+        });
+
+        // Mostrar mensaje de shortcuts
+        console.log('🎯 Shortcuts del calendario:');
+        console.log('Ctrl + F : Buscar factura');
+        console.log('Ctrl + ← : Mes anterior');
+        console.log('Ctrl + → : Mes siguiente');
+        console.log('Ctrl + T : Ir al mes actual');
+        console.log('ESC      : Limpiar búsqueda');
+        
+        // Mostrar ayuda si hay búsqueda activa
+        {% if folio_busqueda %}
+        console.log('🔍 Búsqueda activa: Folio "{{ folio_busqueda }}"');
+        console.log('   • Días resaltados: Días que contienen fechas de pago de la factura buscada');
+        console.log('   • Pulsa ESC para limpiar la búsqueda');
+        {% endif %}
+    });
+</script>
+{% endblock %}

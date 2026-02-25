@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}Agregar Método de Pago – Prueba Gratis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pago-container {
+        max-width: 640px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .trial-banner {
+        background: linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(59,130,246,0.15) 100%);
+        border: 1px solid rgba(16,185,129,0.4);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .trial-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 20px rgba(16,185,129,0.3);
+    }
+
+    .trial-text h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #34d399;
+        margin-bottom: 0.35rem;
+    }
+
+    .trial-text p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .trial-text strong {
+        color: var(--text-light);
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+    }
+
+    .payment-card {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title i {
+        color: var(--accent-blue);
+    }
+
+    /* Precio */
+    .price-display {
+        text-align: center;
+        margin-bottom: 2rem;
+        background: rgba(15,23,42,0.4);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .price-amount {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+    }
+
+    .price-period {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .price-trial {
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: #34d399;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    /* Stripe Element */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 0.6rem;
+    }
+
+    #card-element {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.875rem 1rem;
+        transition: all 0.3s ease;
+        min-height: 44px;
+    }
+
+    #card-element.StripeElement--focus {
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    #card-element.StripeElement--invalid {
+        border-color: #ef4444;
+    }
+
+    #card-errors {
+        color: #f87171;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        min-height: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Seguridad */
+    .security-note {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(15,23,42,0.3);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.875rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .security-note i {
+        color: #34d399;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    /* Acciones */
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-pay {
+        width: 100%;
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #2563eb 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        letter-spacing: 0.025em;
+    }
+
+    .btn-pay:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(59,130,246,0.35);
+    }
+
+    .btn-pay:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-skip {
+        width: 100%;
+        background: transparent;
+        color: var(--text-muted);
+        padding: 0.75rem;
+        border-radius: 10px;
+        border: 1px dashed var(--border-color);
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        font-family: inherit;
+    }
+
+    .btn-skip:hover {
+        border-color: var(--accent-blue);
+        color: var(--text-light);
+    }
+
+    .stripe-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    .spinner {
+        display: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading .spinner { display: block; }
+    .loading .btn-text { display: none; }
+
+    @media (max-width: 768px) {
+        .pago-container { padding: 0 1rem; }
+        .payment-card { padding: 1.5rem; }
+        .trial-banner { flex-direction: column; text-align: center; }
+        .price-amount { font-size: 2.5rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pago-container">
+
+    <!-- Banner de prueba gratis -->
+    <div class="trial-banner">
+        <div class="trial-icon">🎉</div>
+        <div class="trial-text">
+            <h2>¡14 días gratis!</h2>
+            <p>Tu período de prueba termina el <strong>{{ suscripcion.trial_fin|date:"d \d\e F, Y" }}</strong>.<br>
+               No se realizará ningún cobro hasta entonces. Puedes cancelar en cualquier momento.</p>
+        </div>
+    </div>
+
+    <h1 class="page-title">Método de Pago</h1>
+    <p class="page-subtitle">Agrega una tarjeta para continuar después de tu prueba gratis.</p>
+
+
+    <div class="payment-card">
+
+        <!-- Precio -->
+        <div class="price-display">
+            <div class="price-amount">${{ suscripcion.precio_mensual|floatformat:0 }} MXN</div>
+            <div class="price-period">por mes, después de la prueba</div>
+            <div class="price-trial">
+                <i class="fas fa-check-circle"></i>
+                Los primeros 14 días son completamente gratuitos
+            </div>
+        </div>
+
+        <h3 class="section-title">
+            <i class="fas fa-credit-card"></i>
+            Datos de la Tarjeta
+        </h3>
+
+        <div class="security-note">
+            <i class="fas fa-shield-alt"></i>
+            <span>Tu información de pago es procesada directamente por <strong>Stripe</strong>. Nunca almacenamos los datos de tu tarjeta.</span>
+        </div>
+
+        <form id="payment-form" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="payment_method_id" name="payment_method_id">
+
+            <div class="form-group">
+                <label class="form-label">
+                    Número, expiración y CVV de la tarjeta
+                </label>
+                <div id="card-element"></div>
+                <div id="card-errors" role="alert"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="submit-btn" class="btn-pay">
+                    <div class="spinner"></div>
+                    <span class="btn-text">
+                        <i class="fas fa-lock"></i>
+                        Guardar Tarjeta – Empezar Prueba Gratis
+                    </span>
+                </button>
+                <a href="{% url 'index' %}" class="btn-skip">
+                    <i class="fas fa-clock"></i>
+                    Omitir por ahora – Agregar después
+                </a>
+            </div>
+
+            <div class="stripe-badge">
+                <i class="fas fa-lock" style="color: #60a5fa;"></i>
+                Pagos seguros procesados por Stripe
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripePublicKey = '{{ stripe_public_key }}';
+    const stripe = Stripe(stripePublicKey);
+    const elements = stripe.elements({
+        appearance: {
+            theme: 'night',
+            variables: {
+                colorPrimary: '#3b82f6',
+                colorBackground: '#0f172a',
+                colorText: '#ffffff',
+                colorInputText: '#ffffff',
+                colorInputBackground: '#0f172a',
+                colorDanger: '#ef4444',
+                borderRadius: '8px',
+                fontFamily: 'Inter, sans-serif',
+            }
+        }
+    });
+
+    const cardElement = elements.create('card', {
+        style: {
+            base: {
+                color: '#ffffff',
+                fontFamily: '"Inter", sans-serif',
+                fontSize: '16px',
+                fontWeight: '500',
+                '::placeholder': { color: '#64748b' },
+                iconColor: '#94a3b8',
+            },
+            invalid: {
+                color: '#f87171',
+                iconColor: '#f87171',
+            }
+        }
+    });
+    cardElement.mount('#card-element');
+
+    cardElement.on('change', function(event) {
+        const errorEl = document.getElementById('card-errors');
+        errorEl.textContent = event.error ? '⚠ ' + event.error.message : '';
+    });
+
+    const form = document.getElementById('payment-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        const { error, paymentMethod } = await stripe.createPaymentMethod({
+            type: 'card',
+            card: cardElement,
+        });
+
+        if (error) {
+            document.getElementById('card-errors').textContent = '⚠ ' + error.message;
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+        } else {
+            document.getElementById('payment_method_id').value = paymentMethod.id;
+            form.submit();
+        }
+    });
+</script>
+{% endblock %}

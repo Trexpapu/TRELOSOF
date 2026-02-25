@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Organización{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .form-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .org-icon-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .org-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, #7c3aed 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        color: var(--text-light);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.85rem 1.25rem;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent-purple);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    .form-help {
+        margin-top: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-save {
+        flex: 1;
+        background: linear-gradient(135deg, var(--accent-purple) 0%, #7c3aed 100%);
+        color: white;
+        padding: 0.85rem 1.5rem;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.35);
+    }
+
+    .btn-cancel {
+        padding: 0.85rem 1.5rem;
+        background: rgba(30, 41, 59, 0.8);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--accent-blue);
+        transform: translateY(-2px);
+    }
+
+    .error-list {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .error-list ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .error-list li {
+        color: #f87171;
+        font-size: 0.9rem;
+        padding: 0.25rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .error-list li::before {
+        content: '⚠';
+        flex-shrink: 0;
+    }
+
+    .success-message {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #bbf7d0;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 0 1rem;
+            margin: 1rem auto;
+        }
+
+        .form-card {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="page-header">
+        <h1 class="page-title">Editar Organización</h1>
+        <p class="page-subtitle">Modifica el nombre de tu organización</p>
+    </div>
+
+
+    <div class="form-card">
+        <div class="org-icon-header">
+            <div class="org-icon">
+                <i class="fas fa-building"></i>
+            </div>
+        </div>
+
+        {% if form.errors %}
+            <div class="error-list">
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'editar-organizacion' %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_nombre" class="form-label">
+                    <i class="fas fa-tag" style="color: var(--accent-purple); margin-right: 0.5rem;"></i>
+                    Nombre de la Organización
+                </label>
+                <input 
+                    type="text" 
+                    name="nombre" 
+                    id="id_nombre" 
+                    value="{{ form.instance.nombre }}"
+                    class="form-input"
+                    placeholder="Ej: Mi Empresa S.A. de C.V."
+                    required
+                    maxlength="255"
+                >
+                <p class="form-help">
+                    Este nombre se mostrará en toda la aplicación y en los reportes.
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'users-list' %}" class="btn-cancel">
+                    <i class="fas fa-arrow-left"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

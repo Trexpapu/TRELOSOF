@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Cuenta Maestra - Abarrotera Morelia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-section {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
+        z-index: 0;
+    }
+
+    .header-section::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -30%;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(167, 139, 250, 0.1) 0%, transparent 70%);
+        z-index: 0;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-title i {
+        font-size: 2.2rem;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .detail-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .detail-group {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .detail-group:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .detail-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+
+    .detail-value {
+        font-size: 1.25rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    .detail-value.account {
+        font-family: 'Monaco', 'Consolas', monospace;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 1rem;
+        border-radius: 8px;
+        white-space: pre-wrap;
+        line-height: 1.6;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border: 1px solid;
+    }
+
+    .alert-success {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: rgba(34, 197, 94, 0.3);
+        color: #86efac;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+
+    .alert-warning {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #fcd34d;
+    }
+
+    .alert-info {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+        color: #93c5fd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h1 class="page-title">
+        <i class="fas fa-landmark"></i> Cuenta Maestra
+    </h1>
+    <a href="{% url 'editar-cuenta-maestra' %}" class="btn-edit">
+        <i class="fas fa-edit"></i> Editar Información
+    </a>
+</div>
+
+
+<div class="detail-card">
+    <div class="detail-group">
+        <div class="detail-label">Nombre de la Cuenta</div>
+        <div class="detail-value">{{ cuenta.nombre }}</div>
+    </div>
+    
+    <div class="detail-group">
+        <div class="detail-label">Información Bancaria</div>
+        <div class="detail-value account">
+            {% if cuenta.cuenta %}
+                {{ cuenta.cuenta }}
+            {% else %}
+                <span style="color: var(--text-muted); font-style: italic;">No hay información bancaria registrada.</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+            <div class="detail-label">Teléfono</div>
+            <div class="detail-value">
+                {% if cuenta.telefono %}
+                    {{ cuenta.telefono }}
+                {% else %}
+                    <span style="color: var(--text-muted);">--</span>
+                {% endif %}
+            </div>
+        </div>
+        <div>
+            <div class="detail-label">Correo Electrónico</div>
+            <div class="detail-value">
+                {% if cuenta.email %}
+                    {{ cuenta.email }}
+                {% else %}
+                    <span style="color: var(--text-muted);">--</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
