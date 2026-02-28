@@ -449,30 +449,20 @@
             </div>
         </a>
 
-        <!-- Método de Pago -->
-        <a href="{% url 'suscripcion-metodo-pago' %}" class="settings-card">
+        <!-- Portal de Facturación (Stripe Billing Portal) -->
+        {% if suscripcion and suscripcion.stripe_customer_id %}
+        <a href="{% url 'suscripcion-cambiar-plan' %}" class="settings-card">
             <div class="settings-card-icon icon-green">
                 <i class="fas fa-credit-card"></i>
             </div>
-            <h3>
-                {% if suscripcion and suscripcion.tiene_metodo_pago %}
-                    Actualizar Tarjeta
-                {% else %}
-                    Agregar Método de Pago
-                {% endif %}
-            </h3>
-            <p>
-                {% if suscripcion and suscripcion.tiene_metodo_pago and suscripcion.card_last4 %}
-                    Tarjeta actual: {{ suscripcion.card_brand|capfirst }} ****{{ suscripcion.card_last4 }}
-                {% else %}
-                    Agrega una tarjeta para mantener tu suscripción.
-                {% endif %}
-            </p>
+            <h3>Portal de Facturación</h3>
+            <p>Gestiona tu tarjeta, cambia de plan o descarga tus facturas desde el portal de Stripe.</p>
             <div class="card-arrow">
-                <span>Gestionar pago</span>
+                <span>Abrir portal</span>
                 <i class="fas fa-arrow-right"></i>
             </div>
         </a>
+        {% endif %}
 
         <!-- Gestionar Usuarios -->
         <a href="{% url 'users-list' %}" class="settings-card">

@@ -12,16 +12,17 @@ Reglas de bloqueo:
                · proximo_cobro > ahora → ya pagó ese mes → acceso libre
                · proximo_cobro <= ahora o None → bloquear
 
-Cuando bloquea, redirige de forma inteligente:
-  · Tiene tarjeta guardada → /suscripcion/historial/ (puede pagar ahora)
-  · Sin tarjeta            → /suscripcion/metodo-pago/ (agrega tarjeta primero)
+Cuando bloquea, redirige a:
+  /suscripciones/plan/ (página de selección de plan → Stripe Checkout)
 
 URLs siempre accesibles (whitelist):
   /login/  /logout/
-  /suscripcion/metodo-pago/
-  /suscripcion/historial/
-  /suscripcion/cobrar/
-  /suscripcion/cancelar/
+  /suscripciones/plan/
+  /suscripciones/checkout/
+  /suscripciones/historial/
+  /suscripciones/cancelar/
+  /suscripciones/webhook/
+  /suscripciones/cambiar-plan/
   /static/  /media/  /admin/
 """
 
@@ -34,10 +35,12 @@ WHITELIST_PREFIXES = (
     '/login/',
     '/logout/',
     '/2fa/verificar/',             # paso 2 del login con 2FA
-    '/suscripcion/metodo-pago/',
-    '/suscripcion/historial/',
-    '/suscripcion/cobrar/',
-    '/suscripcion/cancelar/',
+    '/suscripciones/plan/',
+    '/suscripciones/checkout/',
+    '/suscripciones/historial/',
+    '/suscripciones/cancelar/',
+    '/suscripciones/cambiar-plan/',
+    '/suscripciones/webhook/',
     '/core/terminos-y-condiciones/',
     '/core/politicas-de-privacidad/',
     '/static/',
@@ -61,10 +64,8 @@ class SuscripcionMiddleware:
             if not any(path.startswith(prefix) for prefix in WHITELIST_PREFIXES):
                 suscripcion = self._obtener_suscripcion(request.user)
                 if suscripcion and self._debe_bloquear(suscripcion):
-                    if suscripcion.tiene_metodo_pago:
-                        return redirect(reverse('suscripcion-historial'))
-                    else:
-                        return redirect(reverse('suscripcion-metodo-pago'))
+                    # Redirigir al plan para que pague vía Stripe Checkout
+                    return redirect(reverse('suscripcion-seleccionar-plan'))
 
         return self.get_response(request)
 

@@ -36,7 +36,7 @@ def register_organization(request):
                 login(request, user)
                 messages.success(request, f"¡Bienvenido! Organización '{org.nombre}' creada. Tienes 14 días de prueba gratis.")
                 # Paso 2: agregar método de pago (puede omitirse)
-                return redirect("suscripcion-registro-pago")
+                return redirect("suscripcion-seleccionar-plan")
             except Exception as e:
                 messages.error(request, f"Error al registrar: {e}")
     else:

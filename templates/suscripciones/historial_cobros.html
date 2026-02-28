@@ -307,12 +307,7 @@
         <!-- Botones de acción -->
         <div style="display:flex; gap:0.75rem; flex-wrap:wrap; flex-shrink:0;">
             {% if suscripcion.tiene_metodo_pago %}
-            <button class="btn-cobrar" onclick="abrirModalCobro()">
-                <i class="fas fa-bolt"></i> Pagar y Reactivar
-            </button>
-            {% endif %}
-            <!-- Siempre disponible: cambiar a otra tarjeta -->
-            <a href="{% url 'suscripcion-metodo-pago' %}" style="
+            <a href="{% url 'suscripcion-seleccionar-plan' %}" style="
                 display: inline-flex;
                 align-items: center;
                 gap: 0.5rem;
@@ -328,7 +323,7 @@
             " onmouseover="this.style.borderColor='rgba(96,165,250,0.5)'"
                onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
                 <i class="fas fa-credit-card"></i>
-                {% if suscripcion.tiene_metodo_pago %}Usar otra tarjeta{% else %}Agregar tarjeta{% endif %}
+                Suscribirse ahora
             </a>
         </div>
     </div>
@@ -385,15 +380,10 @@
             {% endif %}
 
             <!-- Botón cobrar -->
-            {% if suscripcion.activa and suscripcion.tiene_metodo_pago %}
-            <button class="btn-cobrar" onclick="abrirModalCobro()">
-                <i class="fas fa-bolt"></i>
-                Pagar Mes Adelantado
-            </button>
-            {% elif not suscripcion.tiene_metodo_pago %}
-            <a href="{% url 'suscripcion-metodo-pago' %}" class="btn-cobrar" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+            {% if not suscripcion.tiene_metodo_pago %}
+            <a href="{% url 'suscripcion-seleccionar-plan' %}" class="btn-cobrar" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
                 <i class="fas fa-credit-card"></i>
-                Agregar Tarjeta Primero
+                Suscribirse
             </a>
             {% endif %}
         </div>
@@ -457,41 +447,4 @@
     </div>
 
 </div>
-
-<!-- ── Modal: Confirmar cobro manual ── -->
-<div class="modal-overlay" id="modalCobro">
-    <div class="modal-box">
-        <div class="modal-icon"><i class="fas fa-bolt"></i></div>
-        <h3>Confirmar Cobro</h3>
-        <p>
-            Se realizará un cargo de <strong>${{ suscripcion.precio_mensual|floatformat:2 }} MXN</strong>
-            a tu tarjeta {% if suscripcion.card_last4 %}terminada en <strong>{{ suscripcion.card_last4 }}</strong>{% endif %} ahora mismo.
-        </p>
-        <div class="modal-actions">
-            <button class="btn-modal-cancel" onclick="cerrarModalCobro()">
-                <i class="fas fa-times"></i> Cancelar
-            </button>
-            <form method="POST" action="{% url 'suscripcion-cobrar-manual' %}" style="flex:1;">
-                {% csrf_token %}
-                <button type="submit" class="btn-modal-confirm" style="width:100%;">
-                    <i class="fas fa-bolt"></i> Cobrar Ahora
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    function abrirModalCobro() {
-        document.getElementById('modalCobro').classList.add('active');
-    }
-    function cerrarModalCobro() {
-        document.getElementById('modalCobro').classList.remove('active');
-    }
-    document.getElementById('modalCobro').addEventListener('click', function(e) {
-        if (e.target === this) cerrarModalCobro();
-    });
-</script>
 {% endblock %}

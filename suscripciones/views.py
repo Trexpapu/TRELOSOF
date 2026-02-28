@@ -16,52 +16,14 @@ from django.views.decorators.http import require_POST
 logger = logging.getLogger(__name__)
 
 from .services.suscripcion import (
-    guardar_metodo_pago,
     cancelar_suscripcion,
     obtener_suscripcion,
     seleccionar_plan,
-    cambiar_plan,
 )
 from .models import HistorialCobro, Suscripcion
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Vista: agregar / actualizar método de pago
-# ─────────────────────────────────────────────────────────────────────────────
-@login_required
-def agregar_metodo_pago(request):
-    """
-    Muestra el formulario de tarjeta (Stripe.js).
-    POST: guarda el PaymentMethod generado en el frontend.
-    """
-    if not request.user.is_organizacion_admin:
-        messages.error(request, "Solo el administrador puede gestionar el método de pago.")
-        return redirect('configuracion-index')
 
-    suscripcion = obtener_suscripcion(request.user.organizacion)
-    if not suscripcion:
-        messages.error(request, "No se encontró una suscripción para tu organización.")
-        return redirect('configuracion-index')
-
-    if request.method == 'POST':
-        payment_method_id = request.POST.get('payment_method_id')
-        if not payment_method_id:
-            messages.error(request, "No se recibió el método de pago. Inténtalo nuevamente.")
-            return render(request, 'suscripciones/agregar_metodo_pago.html', {
-                'suscripcion': suscripcion,
-                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-            })
-        try:
-            guardar_metodo_pago(suscripcion, payment_method_id)
-            messages.success(request, "Método de pago guardado correctamente.")
-            return redirect('configuracion-index')
-        except (ValidationError, stripe.error.StripeError) as e:
-            messages.error(request, f"Error al guardar el método de pago: {e}")
-
-    return render(request, 'suscripciones/agregar_metodo_pago.html', {
-        'suscripcion': suscripcion,
-        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-    })
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -91,37 +53,7 @@ def cancelar_suscripcion_view(request):
     return redirect('configuracion-index')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Vista: método de pago en el registro (paso 2 del registro)
-# ─────────────────────────────────────────────────────────────────────────────
-@login_required
-def metodo_pago_registro(request):
-    """
-    Página de método de pago que aparece justo después de registrarse.
-    El usuario puede omitirla (tendrá X días sin pagar) o agregarla ahora.
-    """
-    suscripcion = obtener_suscripcion(request.user.organizacion)
-    if not suscripcion:
-        return redirect('index')
 
-    if request.method == 'POST':
-        payment_method_id = request.POST.get('payment_method_id')
-        if payment_method_id:
-            try:
-                guardar_metodo_pago(suscripcion, payment_method_id)
-                messages.success(request, "¡Método de pago guardado! Tu suscripción está lista.")
-            except (ValidationError, stripe.error.StripeError) as e:
-                messages.error(request, f"Error al guardar el método de pago: {e}")
-                return render(request, 'suscripciones/metodo_pago_registro.html', {
-                    'suscripcion': suscripcion,
-                    'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-                })
-        return redirect('index')
-
-    return render(request, 'suscripciones/metodo_pago_registro.html', {
-        'suscripcion': suscripcion,
-        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-    })
 
 
 
@@ -189,14 +121,14 @@ def seleccionar_plan_view(request):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Vista: Cambiar de plan (Upgrade / Downgrade)
+# Vista: Cambiar de plan vía Stripe Billing Portal
 # ─────────────────────────────────────────────────────────────────────────────
 @login_required
-@require_POST
 def cambiar_plan_view(request):
     """
-    Vista procesar cambio de plan.
-    POST /suscripciones/cambiar-plan/
+    Redirige al Portal de Facturación de Stripe donde el usuario puede
+    cambiar de plan, actualizar tarjeta o cancelar.
+    Stripe se encarga de cobrar la diferencia y nos avisa vía webhook.
     """
     if not request.user.is_organizacion_admin:
         messages.error(request, "Solo el administrador puede cambiar el plan.")
@@ -206,14 +138,23 @@ def cambiar_plan_view(request):
     if not suscripcion:
         return redirect('index')
 
-    nuevo_plan = request.POST.get('plan')
-    try:
-        resultado = cambiar_plan(suscripcion, nuevo_plan)
-        messages.success(request, resultado['info'])
-    except ValidationError as e:
-        messages.error(request, str(e))
+    if not suscripcion.stripe_customer_id:
+        messages.error(request, "Primero debes realizar un pago para poder gestionar tu plan.")
+        return redirect('suscripcion-seleccionar-plan')
 
-    return redirect('configuracion-index')
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    return_url = f"{settings.DOMAIN_URL}/configuracion/"
+
+    try:
+        portal_session = stripe.billing_portal.Session.create(
+            customer=suscripcion.stripe_customer_id,
+            return_url=return_url,
+        )
+        return redirect(portal_session.url)
+    except stripe.error.StripeError as e:
+        logger.error(f'[PORTAL] Error al crear sesión del portal: {e}')
+        messages.error(request, "No se pudo abrir el portal de facturación. Intenta de nuevo.")
+        return redirect('configuracion-index')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -377,6 +318,7 @@ def _handle_checkout_completed(session):
     """
     checkout.session.completed
     Activa la suscripción y guarda los IDs de Stripe.
+    Busca la suscripción por organizacion_id (de la metadata), NO por email.
     """
     from .models import Suscripcion
 
@@ -384,42 +326,30 @@ def _handle_checkout_completed(session):
 
     stripe_customer_id      = session.get('customer')
     stripe_subscription_id  = session.get('subscription')
-    customer_email          = session.get('customer_details', {}).get('email') or session.get('customer_email')
     metadata                = session.get('metadata', {})
+    organizacion_id         = metadata.get('organizacion_id')
     plan_elegido            = (metadata.get('plan') or 'BASICO').upper()
 
-    # Mapeo Price ID → plan (fallback a metadata si Stripe no proporciona price)
+    # Mapeo Price ID → plan
     price_map = {
         settings.STRIPE_PRICE_ID_BASICO: 'BASICO',
         settings.STRIPE_PRICE_ID_PRO:   'PRO',
     }
 
-    # ── Buscar la Suscripcion local ───────────────────────────────────────────
-    suscripcion = None
+    # ── Buscar la Suscripcion local por organizacion_id (seguro) ──────────────
+    if not organizacion_id:
+        logger.error(
+            '[WEBHOOK] checkout.session.completed: '
+            'metadata no contiene organizacion_id. No se puede procesar.'
+        )
+        return
 
-    # Intento 1: por customer_id (cliente ya existía)
-    if stripe_customer_id:
-        suscripcion = Suscripcion.objects.filter(
-            stripe_customer_id=stripe_customer_id
-        ).first()
-
-    # Intento 2: por email del admin de la organización
-    if not suscripcion and customer_email:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        admin = User.objects.filter(
-            email=customer_email,
-            is_organizacion_admin=True
-        ).first()
-        if admin and hasattr(admin, 'organizacion'):
-            suscripcion = Suscripcion.objects.filter(
-                organizacion=admin.organizacion
-            ).first()
-
-    if not suscripcion:
+    try:
+        suscripcion = Suscripcion.objects.get(organizacion_id=organizacion_id)
+    except Suscripcion.DoesNotExist:
         logger.error(
             f'[WEBHOOK] checkout.session.completed: '
-            f'No se encontró Suscripcion para customer={stripe_customer_id} / email={customer_email}'
+            f'No se encontró Suscripcion para organizacion_id={organizacion_id}'
         )
         return
 
@@ -430,7 +360,7 @@ def _handle_checkout_completed(session):
         logger.error(f'[WEBHOOK] Error al recuperar suscripción de Stripe: {e}')
         return
 
-    # Detectar plan por price_id si no viene en metadata
+    # Detectar plan por price_id
     current_price_id = (
         stripe_sub['items']['data'][0]['price']['id']
         if stripe_sub.get('items') and stripe_sub['items']['data']
