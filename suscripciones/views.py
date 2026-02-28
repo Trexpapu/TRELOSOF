@@ -180,10 +180,19 @@ def cambiar_plan_view(request):
             suscripcion.stripe_subscription_id,
             expand=['items.data'],
         )
-        item_id = stripe_sub.items.data[0].id
+        item_id = stripe_sub['items']['data'][0]['id']
 
         if is_upgrade:
             # ── UPGRADE: Cambio inmediato con prorrateo ──────────────────────
+            # Si hay un schedule pendiente (downgrade anterior), cancelarlo primero
+            existing_schedule_id = stripe_sub.get('schedule') or suscripcion.stripe_schedule_id
+            if existing_schedule_id:
+                try:
+                    stripe.SubscriptionSchedule.release(existing_schedule_id)
+                    logger.info(f'[PLAN] Schedule {existing_schedule_id} liberado para permitir upgrade')
+                except stripe.error.StripeError:
+                    pass  # Si ya no existe, no importa
+
             stripe.Subscription.modify(
                 suscripcion.stripe_subscription_id,
                 items=[{'id': item_id, 'price': new_price_id}],
@@ -211,10 +220,16 @@ def cambiar_plan_view(request):
             )
         else:
             # ── DOWNGRADE: Programar cambio al final del período ─────────────
-            # Crear un Schedule desde la suscripción existente
-            schedule = stripe.SubscriptionSchedule.create(
-                from_subscription=suscripcion.stripe_subscription_id,
-            )
+            existing_schedule_id = stripe_sub.get('schedule') or suscripcion.stripe_schedule_id
+
+            if existing_schedule_id:
+                # Ya tiene un schedule → modificarlo con las nuevas fases
+                schedule = stripe.SubscriptionSchedule.retrieve(existing_schedule_id)
+            else:
+                # No tiene schedule → crear uno desde la suscripción
+                schedule = stripe.SubscriptionSchedule.create(
+                    from_subscription=suscripcion.stripe_subscription_id,
+                )
 
             current_price_id = price_map.get(suscripcion.plan, settings.STRIPE_PRICE_ID_BASICO)
             current_phase = schedule.phases[0]
@@ -230,7 +245,6 @@ def cambiar_plan_view(request):
                     },
                     {
                         'items': [{'price': new_price_id}],
-                        'iterations': 1,
                         'proration_behavior': 'none',
                     },
                 ],
@@ -487,8 +501,8 @@ def _handle_checkout_completed(session):
     # Detectar plan por price_id
     items_data = []
     try:
-        items_data = stripe_sub.items.data if stripe_sub.items else []
-    except (AttributeError, KeyError):
+        items_data = stripe_sub['items']['data']
+    except (KeyError, TypeError):
         try:
             items_data = stripe_sub['items']['data']
         except (KeyError, TypeError):
@@ -561,15 +575,9 @@ def _handle_checkout_completed(session):
         'updated_at',
     ])
 
-    # ── Registrar en historial de cobros ──────────────────────────────────────
-    from .models import HistorialCobro
-    HistorialCobro.objects.create(
-        suscripcion=suscripcion,
-        monto=precio,
-        resultado='EXITOSO',
-        stripe_charge_id=session.get('payment_intent', ''),
-        descripcion=f'Pago inicial – Plan {plan} vía Checkout',
-    )
+    # NOTA: No creamos HistorialCobro aquí para evitar duplicados.
+    # El registro se crea en _handle_invoice_paid (invoice.payment_succeeded),
+    # que siempre se dispara junto con checkout.session.completed.
 
     logger.info(
         f'[WEBHOOK] Suscripción ACTIVADA | org={suscripcion.organizacion.nombre} '
@@ -633,15 +641,26 @@ def _handle_invoice_paid(invoice):
     suscripcion.save(update_fields=['estado', 'proximo_cobro', 'updated_at'])
 
     # ── Registrar en historial de cobros ──────────────────────────────────────
-    from .models import HistorialCobro
     monto_cobrado = invoice.get('amount_paid', 0) / 100  # Stripe usa centavos
-    HistorialCobro.objects.create(
-        suscripcion=suscripcion,
-        monto=monto_cobrado,
-        resultado='EXITOSO',
-        stripe_charge_id=invoice.get('payment_intent', ''),
-        descripcion='Renovación mensual',
-    )
+    if monto_cobrado > 0:
+        from .models import HistorialCobro
+        billing_reason = invoice.get('billing_reason', '')
+        if billing_reason == 'subscription_create':
+            descripcion = f'Pago inicial – Plan {suscripcion.plan}'
+        elif billing_reason == 'subscription_cycle':
+            descripcion = 'Renovación mensual'
+        elif billing_reason == 'subscription_update':
+            descripcion = 'Ajuste por cambio de plan'
+        else:
+            descripcion = f'Pago – {billing_reason or "Stripe"}'
+
+        HistorialCobro.objects.create(
+            suscripcion=suscripcion,
+            monto=monto_cobrado,
+            resultado='EXITOSO',
+            stripe_charge_id=invoice.get('payment_intent', ''),
+            descripcion=descripcion,
+        )
 
     logger.info(
         f'[WEBHOOK] Renovación exitosa | org={suscripcion.organizacion.nombre} '
