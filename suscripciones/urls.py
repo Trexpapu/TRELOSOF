@@ -7,8 +7,10 @@ urlpatterns = [
     path('plan/', views.seleccionar_plan_view, name='suscripcion-seleccionar-plan'),
     path('cambiar-plan/', views.cambiar_plan_view, name='suscripcion-cambiar-plan'),
     # ── Stripe Checkout ────────────────────────────────────────────────────────
-    path('checkout/<str:plan>/', views.crear_checkout_session, name='suscripcion-checkout'),
+    # IMPORTANTE: exito/ va ANTES de <str:plan>/ para que Django no capture
+    # la palabra "exito" como un nombre de plan.
     path('checkout/exito/', views.checkout_exitoso, name='suscripcion-checkout-exito'),
+    path('checkout/<str:plan>/', views.crear_checkout_session, name='suscripcion-checkout'),
     # ── Stripe Webhook (sin CSRF, sin login) ──────────────────────────────────
     path('webhook/', views.stripe_webhook, name='suscripcion-webhook'),
 ]

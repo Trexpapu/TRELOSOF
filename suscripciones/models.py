@@ -78,6 +78,17 @@ class Suscripcion(models.Model):
         return False
 
     @property
+    def es_trial_activo(self):
+        """
+        Devuelve True SOLO si:
+        1. El estado es exactamente 'TRIAL'.
+        2. La fecha actual (timezone.now()) es menor que self.trial_fin.
+        """
+        if self.estado == 'TRIAL' and self.trial_fin:
+            return timezone.now() < self.trial_fin
+        return False
+
+    @property
     def trial_dias_restantes(self):
         if self.en_trial:
             delta = self.trial_fin - timezone.now()

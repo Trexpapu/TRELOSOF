@@ -360,24 +360,72 @@ def _handle_checkout_completed(session):
 
     # ── Obtener detalles de la Suscripción de Stripe ──────────────────────────
     try:
-        stripe_sub = stripe.Subscription.retrieve(stripe_subscription_id)
+        stripe_sub = stripe.Subscription.retrieve(
+            stripe_subscription_id,
+            expand=['items.data'],
+        )
     except stripe.error.StripeError as e:
         logger.error(f'[WEBHOOK] Error al recuperar suscripción de Stripe: {e}')
         return
 
     # Detectar plan por price_id
-    current_price_id = (
-        stripe_sub['items']['data'][0]['price']['id']
-        if stripe_sub.get('items') and stripe_sub['items']['data']
-        else None
-    )
+    items_data = []
+    try:
+        items_data = stripe_sub.items.data if stripe_sub.items else []
+    except (AttributeError, KeyError):
+        try:
+            items_data = stripe_sub['items']['data']
+        except (KeyError, TypeError):
+            pass
+
+    current_price_id = None
+    if items_data:
+        try:
+            current_price_id = items_data[0].price.id
+        except AttributeError:
+            try:
+                current_price_id = items_data[0]['price']['id']
+            except (KeyError, TypeError):
+                pass
+
     plan = price_map.get(current_price_id, plan_elegido)
 
-    # Convertir current_period_end (Unix timestamp) a datetime aware
-    proximo_cobro = timezone.datetime.fromtimestamp(
-        stripe_sub['current_period_end'],
-        tz=timezone.utc
-    )
+    # ── Obtener current_period_end ────────────────────────────────────────────
+    # En Stripe SDK v14+ (API 2025+), current_period_end está en items.data[0],
+    # NO en el nivel raíz del Subscription.
+    period_end_ts = None
+
+    # Intento 1: desde items.data[0] (SDK v14+ / API 2025+)
+    if items_data:
+        try:
+            period_end_ts = items_data[0].current_period_end
+        except AttributeError:
+            try:
+                period_end_ts = items_data[0]['current_period_end']
+            except (KeyError, TypeError):
+                pass
+
+    # Intento 2: atributo directo (APIs más antiguas)
+    if not period_end_ts:
+        period_end_ts = getattr(stripe_sub, 'current_period_end', None)
+        if not period_end_ts:
+            try:
+                period_end_ts = stripe_sub['current_period_end']
+            except (KeyError, TypeError):
+                pass
+
+    # Fallback: +30 días desde ahora
+    if period_end_ts:
+        proximo_cobro = timezone.datetime.fromtimestamp(
+            period_end_ts, tz=timezone.utc
+        )
+    else:
+        from datetime import timedelta
+        proximo_cobro = timezone.now() + timedelta(days=30)
+        logger.warning(
+            f'[WEBHOOK] No se encontró current_period_end en Subscription '
+            f'{stripe_subscription_id}. Usando fallback +30 días.'
+        )
 
     # ── Actualizar el modelo local ────────────────────────────────────────────
     suscripcion.stripe_customer_id     = stripe_customer_id
@@ -404,33 +452,50 @@ def _handle_invoice_paid(invoice):
     """
     invoice.payment_succeeded
     Renueva la fecha de corte mensualmente.
+    También intenta buscar por customer_id si no encuentra por subscription_id
+    (ocurre en la primera factura del checkout).
     """
     from .models import Suscripcion
 
     stripe_subscription_id = invoice.get('subscription')
-    if not stripe_subscription_id:
-        logger.warning('[WEBHOOK] invoice.payment_succeeded sin subscription_id. Ignorado.')
-        return
 
-    suscripcion = Suscripcion.objects.filter(
-        stripe_subscription_id=stripe_subscription_id
-    ).first()
+    suscripcion = None
+
+    # Intento 1: buscar por subscription_id
+    if stripe_subscription_id:
+        suscripcion = Suscripcion.objects.filter(
+            stripe_subscription_id=stripe_subscription_id
+        ).first()
+
+    # Intento 2: buscar por customer_id (fallback para primera factura)
+    if not suscripcion:
+        stripe_customer_id = invoice.get('customer')
+        if stripe_customer_id:
+            suscripcion = Suscripcion.objects.filter(
+                stripe_customer_id=stripe_customer_id
+            ).first()
 
     if not suscripcion:
-        logger.warning(
+        logger.debug(
             f'[WEBHOOK] invoice.payment_succeeded: '
-            f'No se encontró Suscripcion para subscription_id={stripe_subscription_id}'
+            f'No se encontró Suscripcion para subscription_id={stripe_subscription_id}. '
+            f'Podría ser una factura sin suscripción asociada. Ignorado.'
         )
         return
 
     # Obtener la nueva fecha de fin de período desde la primera línea de la factura
     try:
-        period_end = invoice['lines']['data'][0]['period']['end']
+        lines_data = invoice.get('lines', {}).get('data', [])
+        if not lines_data:
+            # Intentar con atributo directo (Stripe SDK objects)
+            lines_data = getattr(getattr(invoice, 'lines', None), 'data', [])
+
+        period_end = lines_data[0]['period']['end']
         proximo_cobro = timezone.datetime.fromtimestamp(
             period_end,
             tz=timezone.utc
         )
-    except (KeyError, IndexError, TypeError) as e:
+    except (KeyError, IndexError, TypeError, AttributeError) as e:
         logger.error(f'[WEBHOOK] No se pudo leer period.end del invoice: {e}')
         return
 
