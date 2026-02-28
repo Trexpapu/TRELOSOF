@@ -48,6 +48,7 @@ class Suscripcion(models.Model):
     stripe_customer_id    = models.CharField(max_length=120, blank=True, null=True)
     stripe_subscription_id = models.CharField(max_length=120, blank=True, null=True)
     stripe_payment_method_id = models.CharField(max_length=120, blank=True, null=True)
+    stripe_schedule_id     = models.CharField(max_length=120, blank=True, null=True)
 
     # ── Tarjeta (solo datos de display, nunca datos sensibles) ─────────────────────
     card_brand    = models.CharField(max_length=20, blank=True, null=True)   # visa, mastercard…
@@ -57,6 +58,10 @@ class Suscripcion(models.Model):
 
     # ── Precio mensual (en MXN) ───────────────────────────────────────────────────────────
     precio_mensual = models.DecimalField(max_digits=10, decimal_places=2, default=199.00)
+
+    # ── Cambio de plan pendiente (downgrade programado) ────────────────────────────────
+    pending_plan      = models.CharField(max_length=10, blank=True, null=True)
+    pending_plan_date = models.DateTimeField(blank=True, null=True)
 
     # ── Auditoría ─────────────────────────────────────────────────────────────────────────────
     created_at  = models.DateTimeField(auto_now_add=True)
@@ -98,6 +103,16 @@ class Suscripcion(models.Model):
     @property
     def tiene_metodo_pago(self):
         return bool(self.stripe_payment_method_id)
+
+    @property
+    def has_pending_change(self):
+        """True si hay un downgrade/upgrade programado para el futuro."""
+        return bool(self.pending_plan)
+
+    @property
+    def pending_plan_display(self):
+        planes = dict(self.PLANES)
+        return planes.get(self.pending_plan, self.pending_plan)
 
     @property
     def activa(self):

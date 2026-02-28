@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 
@@ -126,40 +127,139 @@ def seleccionar_plan_view(request):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Vista: Cambiar de plan vía Stripe Billing Portal
+# Vista: Cambiar de plan (upgrade inmediato / downgrade al final del período)
 # ─────────────────────────────────────────────────────────────────────────────
 @login_required
+@require_POST
 def cambiar_plan_view(request):
     """
-    Redirige al Portal de Facturación de Stripe donde el usuario puede
-    cambiar de plan, actualizar tarjeta o cancelar.
-    Stripe se encarga de cobrar la diferencia y nos avisa vía webhook.
+    Upgrade: Stripe.Subscription.modify inmediato con proration.
+    Downgrade: Subscription Schedule → cambio al final del período.
     """
     if not request.user.is_organizacion_admin:
         messages.error(request, "Solo el administrador puede cambiar el plan.")
         return redirect('configuracion-index')
 
     suscripcion = obtener_suscripcion(request.user.organizacion)
-    if not suscripcion:
-        return redirect('index')
-
-    if not suscripcion.stripe_customer_id:
-        messages.error(request, "Primero debes realizar un pago para poder gestionar tu plan.")
+    if not suscripcion or not suscripcion.stripe_subscription_id:
+        messages.error(request, "Primero debes tener una suscripción activa.")
         return redirect('suscripcion-seleccionar-plan')
 
+    nuevo_plan = (request.POST.get('plan') or '').upper()
+    if nuevo_plan not in ('BASICO', 'PRO'):
+        messages.error(request, "Plan no válido.")
+        return redirect('configuracion-index')
+
+    if nuevo_plan == suscripcion.plan:
+        messages.info(request, "Ya estás en ese plan.")
+        return redirect('configuracion-index')
+
+    # Bloquear si ya hay un cambio pendiente
+    if suscripcion.has_pending_change:
+        messages.warning(
+            request,
+            f"Ya tienes un cambio programado al Plan {suscripcion.pending_plan_display} "
+            f"para el {suscripcion.pending_plan_date.strftime('%d/%m/%Y') if suscripcion.pending_plan_date else 'próximo período'}. "
+            f"No puedes cambiar de plan hasta que se aplique."
+        )
+        return redirect('configuracion-index')
+
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    return_url = f"{settings.DOMAIN_URL}/configuracion/"
+    PLAN_ORDER = {'BASICO': 1, 'PRO': 2}
+    is_upgrade = PLAN_ORDER.get(nuevo_plan, 0) > PLAN_ORDER.get(suscripcion.plan, 0)
+
+    price_map = {
+        'BASICO': settings.STRIPE_PRICE_ID_BASICO,
+        'PRO':    settings.STRIPE_PRICE_ID_PRO,
+    }
+    new_price_id = price_map[nuevo_plan]
 
     try:
-        portal_session = stripe.billing_portal.Session.create(
-            customer=suscripcion.stripe_customer_id,
-            return_url=return_url,
+        # Recuperar la suscripción de Stripe para obtener el item_id
+        stripe_sub = stripe.Subscription.retrieve(
+            suscripcion.stripe_subscription_id,
+            expand=['items.data'],
         )
-        return redirect(portal_session.url)
+        item_id = stripe_sub.items.data[0].id
+
+        if is_upgrade:
+            # ── UPGRADE: Cambio inmediato con prorrateo ──────────────────────
+            stripe.Subscription.modify(
+                suscripcion.stripe_subscription_id,
+                items=[{'id': item_id, 'price': new_price_id}],
+                proration_behavior='create_prorations',
+            )
+            precio = settings.PLAN_PRO_PRECIO if nuevo_plan == 'PRO' else settings.PLAN_BASICO_PRECIO
+            suscripcion.plan = nuevo_plan
+            suscripcion.precio_mensual = precio
+            suscripcion.pending_plan = None
+            suscripcion.pending_plan_date = None
+            suscripcion.stripe_schedule_id = None
+            suscripcion.save(update_fields=[
+                'plan', 'precio_mensual',
+                'pending_plan', 'pending_plan_date', 'stripe_schedule_id',
+                'updated_at',
+            ])
+
+            logger.info(
+                f'[PLAN] UPGRADE inmediato | org={suscripcion.organizacion.nombre} '
+                f'| {suscripcion.plan} → {nuevo_plan}'
+            )
+            messages.success(
+                request,
+                f"¡Plan actualizado a {nuevo_plan}! El cambio se aplicó de inmediato."
+            )
+        else:
+            # ── DOWNGRADE: Programar cambio al final del período ─────────────
+            # Crear un Schedule desde la suscripción existente
+            schedule = stripe.SubscriptionSchedule.create(
+                from_subscription=suscripcion.stripe_subscription_id,
+            )
+
+            current_price_id = price_map.get(suscripcion.plan, settings.STRIPE_PRICE_ID_BASICO)
+            current_phase = schedule.phases[0]
+
+            stripe.SubscriptionSchedule.modify(
+                schedule.id,
+                end_behavior='release',
+                phases=[
+                    {
+                        'items': [{'price': current_price_id}],
+                        'start_date': current_phase.start_date,
+                        'end_date': current_phase.end_date,
+                    },
+                    {
+                        'items': [{'price': new_price_id}],
+                        'iterations': 1,
+                        'proration_behavior': 'none',
+                    },
+                ],
+            )
+
+            suscripcion.pending_plan = nuevo_plan
+            suscripcion.pending_plan_date = suscripcion.proximo_cobro
+            suscripcion.stripe_schedule_id = schedule.id
+            suscripcion.save(update_fields=[
+                'pending_plan', 'pending_plan_date', 'stripe_schedule_id',
+                'updated_at',
+            ])
+
+            fecha_str = suscripcion.proximo_cobro.strftime('%d/%m/%Y') if suscripcion.proximo_cobro else 'el próximo período'
+            logger.info(
+                f'[PLAN] DOWNGRADE programado | org={suscripcion.organizacion.nombre} '
+                f'| {suscripcion.plan} → {nuevo_plan} | Aplica: {fecha_str}'
+            )
+            messages.success(
+                request,
+                f"Tu cambio al Plan {nuevo_plan} se aplicará el {fecha_str}. "
+                f"Hasta entonces, conservas todas las funciones de tu plan actual."
+            )
+
     except stripe.error.StripeError as e:
-        logger.error(f'[PORTAL] Error al crear sesión del portal: {e}')
-        messages.error(request, "No se pudo abrir el portal de facturación. Intenta de nuevo.")
-        return redirect('configuracion-index')
+        logger.error(f'[PLAN] Error al cambiar plan: {e}')
+        messages.error(request, f"Error al procesar el cambio de plan: {e.user_message or 'Intenta de nuevo.'}")
+
+    return redirect('configuracion-index')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -309,6 +409,22 @@ def stripe_webhook(request):
     elif event_type == 'customer.subscription.deleted':
         _handle_subscription_deleted(data)
 
+    # =========================================================================
+    # CASO D: customer.subscription.updated
+    # Ocurre cuando Stripe aplica un cambio de plan (upgrade/downgrade/schedule).
+    # Aquí sincronizamos el plan real con nuestra BD.
+    # =========================================================================
+    elif event_type == 'customer.subscription.updated':
+        _handle_subscription_updated(data)
+
+    # =========================================================================
+    # CASO E: subscription_schedule.released
+    # Ocurre cuando un Schedule completa su última fase y se disuelve.
+    # Limpiamos los campos pending_plan de nuestra BD.
+    # =========================================================================
+    elif event_type == 'subscription_schedule.released':
+        _handle_schedule_released(data)
+
     else:
         logger.debug(f'[WEBHOOK] Evento ignorado: {event_type}')
 
@@ -416,8 +532,8 @@ def _handle_checkout_completed(session):
 
     # Fallback: +30 días desde ahora
     if period_end_ts:
-        proximo_cobro = timezone.datetime.fromtimestamp(
-            period_end_ts, tz=timezone.utc
+        proximo_cobro = datetime.datetime.fromtimestamp(
+            period_end_ts, tz=datetime.timezone.utc
         )
     else:
         from datetime import timedelta
@@ -428,19 +544,32 @@ def _handle_checkout_completed(session):
         )
 
     # ── Actualizar el modelo local ────────────────────────────────────────────
+    precio = settings.PLAN_PRO_PRECIO if plan == 'PRO' else settings.PLAN_BASICO_PRECIO
     suscripcion.stripe_customer_id     = stripe_customer_id
     suscripcion.stripe_subscription_id = stripe_subscription_id
     suscripcion.estado                 = 'ACTIVA'
     suscripcion.plan                   = plan
+    suscripcion.precio_mensual         = precio
     suscripcion.proximo_cobro          = proximo_cobro
     suscripcion.save(update_fields=[
         'stripe_customer_id',
         'stripe_subscription_id',
         'estado',
         'plan',
+        'precio_mensual',
         'proximo_cobro',
         'updated_at',
     ])
+
+    # ── Registrar en historial de cobros ──────────────────────────────────────
+    from .models import HistorialCobro
+    HistorialCobro.objects.create(
+        suscripcion=suscripcion,
+        monto=precio,
+        resultado='EXITOSO',
+        stripe_charge_id=session.get('payment_intent', ''),
+        descripcion=f'Pago inicial – Plan {plan} vía Checkout',
+    )
 
     logger.info(
         f'[WEBHOOK] Suscripción ACTIVADA | org={suscripcion.organizacion.nombre} '
@@ -491,9 +620,9 @@ def _handle_invoice_paid(invoice):
             lines_data = getattr(getattr(invoice, 'lines', None), 'data', [])
 
         period_end = lines_data[0]['period']['end']
-        proximo_cobro = timezone.datetime.fromtimestamp(
+        proximo_cobro = datetime.datetime.fromtimestamp(
             period_end,
-            tz=timezone.utc
+            tz=datetime.timezone.utc
         )
     except (KeyError, IndexError, TypeError, AttributeError) as e:
         logger.error(f'[WEBHOOK] No se pudo leer period.end del invoice: {e}')
@@ -502,6 +631,17 @@ def _handle_invoice_paid(invoice):
     suscripcion.estado        = 'ACTIVA'
     suscripcion.proximo_cobro = proximo_cobro
     suscripcion.save(update_fields=['estado', 'proximo_cobro', 'updated_at'])
+
+    # ── Registrar en historial de cobros ──────────────────────────────────────
+    from .models import HistorialCobro
+    monto_cobrado = invoice.get('amount_paid', 0) / 100  # Stripe usa centavos
+    HistorialCobro.objects.create(
+        suscripcion=suscripcion,
+        monto=monto_cobrado,
+        resultado='EXITOSO',
+        stripe_charge_id=invoice.get('payment_intent', ''),
+        descripcion='Renovación mensual',
+    )
 
     logger.info(
         f'[WEBHOOK] Renovación exitosa | org={suscripcion.organizacion.nombre} '
@@ -536,4 +676,102 @@ def _handle_subscription_deleted(stripe_sub):
         f'[WEBHOOK] Suscripción VENCIDA (cancelada por Stripe) '
         f'| org={suscripcion.organizacion.nombre} '
         f'| subscription_id={stripe_subscription_id}'
+    )
+
+
+def _handle_subscription_updated(stripe_sub):
+    """
+    customer.subscription.updated
+    Cuando Stripe aplica un cambio de plan (por schedule u otro motivo),
+    sincronizamos el plan y precio en nuestra BD y limpiamos pending_plan.
+    """
+    from .models import Suscripcion
+
+    stripe_subscription_id = stripe_sub.get('id')
+    suscripcion = Suscripcion.objects.filter(
+        stripe_subscription_id=stripe_subscription_id
+    ).first()
+
+    if not suscripcion:
+        logger.debug(
+            f'[WEBHOOK] customer.subscription.updated: '
+            f'No se encontró Suscripcion para subscription_id={stripe_subscription_id}'
+        )
+        return
+
+    # Mapeo Price ID → plan
+    price_map = {
+        settings.STRIPE_PRICE_ID_BASICO: 'BASICO',
+        settings.STRIPE_PRICE_ID_PRO:   'PRO',
+    }
+
+    # Detectar el plan actual en Stripe
+    items_data = []
+    try:
+        items_data = stripe_sub.get('items', {}).get('data', [])
+    except (AttributeError, TypeError):
+        pass
+
+    if not items_data:
+        return
+
+    try:
+        current_price_id = items_data[0]['price']['id']
+    except (KeyError, IndexError, TypeError):
+        return
+
+    nuevo_plan = price_map.get(current_price_id)
+    if not nuevo_plan or nuevo_plan == suscripcion.plan:
+        return  # Sin cambio real de plan
+
+    # Aplicar el cambio
+    precio = settings.PLAN_PRO_PRECIO if nuevo_plan == 'PRO' else settings.PLAN_BASICO_PRECIO
+    suscripcion.plan = nuevo_plan
+    suscripcion.precio_mensual = precio
+    suscripcion.pending_plan = None
+    suscripcion.pending_plan_date = None
+    suscripcion.stripe_schedule_id = None
+    suscripcion.save(update_fields=[
+        'plan', 'precio_mensual',
+        'pending_plan', 'pending_plan_date', 'stripe_schedule_id',
+        'updated_at',
+    ])
+
+    logger.info(
+        f'[WEBHOOK] Plan actualizado vía subscription.updated '
+        f'| org={suscripcion.organizacion.nombre} | plan={nuevo_plan}'
+    )
+
+
+def _handle_schedule_released(schedule):
+    """
+    subscription_schedule.released
+    El schedule completó todas sus fases y se disolvió.
+    Limpiamos los campos pending_plan de la suscripción.
+    """
+    from .models import Suscripcion
+
+    schedule_id = schedule.get('id')
+    suscripcion = Suscripcion.objects.filter(
+        stripe_schedule_id=schedule_id
+    ).first()
+
+    if not suscripcion:
+        logger.debug(
+            f'[WEBHOOK] subscription_schedule.released: '
+            f'No se encontró Suscripcion para schedule_id={schedule_id}'
+        )
+        return
+
+    suscripcion.pending_plan = None
+    suscripcion.pending_plan_date = None
+    suscripcion.stripe_schedule_id = None
+    suscripcion.save(update_fields=[
+        'pending_plan', 'pending_plan_date', 'stripe_schedule_id',
+        'updated_at',
+    ])
+
+    logger.info(
+        f'[WEBHOOK] Schedule released | org={suscripcion.organizacion.nombre} '
+        f'| schedule_id={schedule_id}'
     )

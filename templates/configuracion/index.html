@@ -433,36 +433,59 @@
         </a>
 
         <!-- Plan de Suscripción -->
-        <a href="{% url 'suscripcion-seleccionar-plan' %}" class="settings-card">
+        <div class="settings-card">
             <div class="settings-card-icon icon-blue">
                 <i class="fas fa-layer-group"></i>
             </div>
             <h3>
                 Plan Actual: {% if suscripcion.plan %}{{ suscripcion.plan_display }}{% else %}Ninguno{% endif %}
             </h3>
-            <p>
-                Cambia de plan en cualquier momento para ajustar tu límite de usuarios.
-            </p>
-            <div class="card-arrow">
-                <span>{% if suscripcion.plan %}Cambiar Plan{% else %}Elegir Plan{% endif %}</span>
-                <i class="fas fa-arrow-right"></i>
+            {% if suscripcion.has_pending_change %}
+            <div style="
+                background: rgba(245,158,11,0.15);
+                border: 1px solid rgba(245,158,11,0.4);
+                border-radius: 8px;
+                padding: 0.6rem 0.9rem;
+                margin-top: 0.4rem;
+                font-size: 0.85rem;
+                color: #fbbf24;
+            ">
+                ⏳ Cambio programado a <strong>Plan {{ suscripcion.pending_plan_display }}</strong>
+                {% if suscripcion.pending_plan_date %}
+                el {{ suscripcion.pending_plan_date|date:"d/m/Y" }}
+                {% endif %}
             </div>
-        </a>
+            {% else %}
+            <p>Cambia de plan en cualquier momento para ajustar tu límite de usuarios.</p>
+            {% endif %}
 
-        <!-- Portal de Facturación (Stripe Billing Portal) -->
-        {% if suscripcion and suscripcion.stripe_customer_id %}
-        <a href="{% url 'suscripcion-cambiar-plan' %}" class="settings-card">
-            <div class="settings-card-icon icon-green">
-                <i class="fas fa-credit-card"></i>
+            {% if suscripcion.stripe_subscription_id and not suscripcion.has_pending_change %}
+            <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                {% if suscripcion.plan != 'BASICO' %}
+                <form method="post" action="{% url 'suscripcion-cambiar-plan' %}" style="flex:1;">
+                    {% csrf_token %}
+                    <input type="hidden" name="plan" value="BASICO">
+                    <button type="submit" style="
+                        width:100%; padding:0.5rem; border:1px solid rgba(59,130,246,0.4);
+                        background:rgba(59,130,246,0.1); color:#60a5fa; border-radius:8px;
+                        cursor:pointer; font-weight:600; font-size:0.85rem;
+                    ">Cambiar a Básico</button>
+                </form>
+                {% endif %}
+                {% if suscripcion.plan != 'PRO' %}
+                <form method="post" action="{% url 'suscripcion-cambiar-plan' %}" style="flex:1;">
+                    {% csrf_token %}
+                    <input type="hidden" name="plan" value="PRO">
+                    <button type="submit" style="
+                        width:100%; padding:0.5rem; border:1px solid rgba(139,92,246,0.4);
+                        background:rgba(139,92,246,0.1); color:#a78bfa; border-radius:8px;
+                        cursor:pointer; font-weight:600; font-size:0.85rem;
+                    ">Cambiar a Pro</button>
+                </form>
+                {% endif %}
             </div>
-            <h3>Portal de Facturación</h3>
-            <p>Gestiona tu tarjeta, cambia de plan o descarga tus facturas desde el portal de Stripe.</p>
-            <div class="card-arrow">
-                <span>Abrir portal</span>
-                <i class="fas fa-arrow-right"></i>
-            </div>
-        </a>
-        {% endif %}
+            {% endif %}
+        </div>
 
         <!-- Gestionar Usuarios -->
         <a href="{% url 'users-list' %}" class="settings-card">
