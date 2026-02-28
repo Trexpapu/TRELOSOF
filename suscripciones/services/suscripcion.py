@@ -58,9 +58,10 @@ def crear_suscripcion_trial(organizacion):
 @transaction.atomic
 def cancelar_suscripcion(suscripcion, user):
     """
-    Marca la suscripción como CANCELADA.
-    No se reembolsa; la organización sigue activa hasta el proximo_cobro.
-    Solo el admin de la organización puede cancelar.
+    Programa la cancelación de la suscripción al final del período pagado.
+    NO cambia el estado local: el usuario conserva acceso hasta que
+    Stripe dispare el webhook `customer.subscription.deleted`,
+    momento en que el handler pondrá estado='VENCIDA'.
     """
     if not user.is_organizacion_admin:
         raise ValidationError("Solo el administrador puede cancelar la suscripción.")
@@ -71,17 +72,26 @@ def cancelar_suscripcion(suscripcion, user):
     if suscripcion.estado == 'CANCELADA':
         raise ValidationError("La suscripción ya está cancelada.")
 
-    # Cancelar en Stripe si existe
+    # Programar cancelación al final del período en Stripe
     stripe.api_key = settings.STRIPE_SECRET_KEY
     if suscripcion.stripe_subscription_id:
         try:
-            stripe.Subscription.cancel(suscripcion.stripe_subscription_id)
+            stripe.Subscription.modify(
+                suscripcion.stripe_subscription_id,
+                cancel_at_period_end=True,
+            )
         except Exception as e:
-            logger.warning(f"[SUSCRIPCION] No se pudo cancelar en Stripe: {e}")
+            logger.warning(f"[SUSCRIPCION] No se pudo programar cancelación en Stripe: {e}")
+            raise ValidationError("No se pudo procesar la cancelación. Intenta de nuevo.")
 
-    suscripcion.estado = 'CANCELADA'
-    suscripcion.save(update_fields=['estado', 'updated_at'])
-    logger.info(f"[SUSCRIPCION] Suscripción cancelada por {user.email} para {suscripcion.organizacion.nombre}")
+    # NO modificamos suscripcion.estado aquí.
+    # El estado se mantendrá como ACTIVA hasta que Stripe dispare
+    # el evento customer.subscription.deleted al terminar el período.
+    logger.info(
+        f"[SUSCRIPCION] Cancelación programada por {user.email} "
+        f"para {suscripcion.organizacion.nombre}. "
+        f"Acceso hasta {suscripcion.proximo_cobro}"
+    )
     return suscripcion
 
 

@@ -46,7 +46,12 @@ def cancelar_suscripcion_view(request):
 
     try:
         cancelar_suscripcion(suscripcion, request.user)
-        messages.success(request, "Suscripción cancelada. Tu acceso permanece hasta la fecha de vencimiento.")
+        fecha_fin = suscripcion.proximo_cobro.strftime('%d/%m/%Y') if suscripcion.proximo_cobro else 'el fin del período actual'
+        messages.success(
+            request,
+            f"Tu suscripción se cancelará automáticamente el {fecha_fin}. "
+            f"Hasta entonces, conservas acceso completo."
+        )
     except ValidationError as e:
         messages.error(request, e.message)
 
