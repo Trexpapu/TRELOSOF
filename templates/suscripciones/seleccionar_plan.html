@@ -168,13 +168,9 @@
                 <li><i class="fas fa-check-circle"></i> Reportes Financieros</li>
             </ul>
 
-            <form method="POST" action="{% if suscripcion.plan %}{% url 'suscripcion-cambiar-plan' %}{% else %}{% url 'suscripcion-seleccionar-plan' %}{% endif %}">
-                {% csrf_token %}
-                <input type="hidden" name="plan" value="BASICO">
-                <button type="submit" class="btn-select basic">
+            <a href="{% url 'suscripcion-checkout' 'BASICO' %}" class="btn-select basic" id="btn-checkout-basico">
                     {% if suscripcion.plan == 'BASICO' %}Plan Actual (Básico){% else %}Seleccionar Básico{% endif %}
-                </button>
-            </form>
+                </a>
         </div>
 
         <!-- Plan Pro -->
@@ -191,13 +187,9 @@
                 <li><i class="fas fa-check-circle"></i> Reportes Financieros</li>
             </ul>
 
-            <form method="POST" action="{% if suscripcion.plan %}{% url 'suscripcion-cambiar-plan' %}{% else %}{% url 'suscripcion-seleccionar-plan' %}{% endif %}">
-                {% csrf_token %}
-                <input type="hidden" name="plan" value="PRO">
-                <button type="submit" class="btn-select pro">
+            <a href="{% url 'suscripcion-checkout' 'PRO' %}" class="btn-select pro" id="btn-checkout-pro">
                     {% if suscripcion.plan == 'PRO' %}Plan Actual (Pro){% else %}Seleccionar Pro{% endif %}
-                </button>
-            </form>
+                </a>
         </div>
     </div>
 </div>

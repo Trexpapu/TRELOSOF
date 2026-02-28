@@ -62,10 +62,13 @@ INSTALLED_APPS = [
 ]
 
 # ── Stripe ────────────────────────────────────────────────────────────────────
-# Claves leídas desde .env  (o variables de entorno en Railway)
-STRIPE_PUBLIC_KEY    = os.getenv('STRIPE_PUBLIC_KEY', '')
-STRIPE_SECRET_KEY    = os.getenv('STRIPE_SECRET_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+# Claves y Price IDs leídos desde .env (o variables de entorno en Railway)
+STRIPE_PUBLIC_KEY         = os.environ.get('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY         = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET     = os.environ.get('STRIPE_WEBHOOK_SECRET')
+STRIPE_PRICE_ID_BASICO    = os.environ.get('STRIPE_PRICE_ID_BASICO')
+STRIPE_PRICE_ID_PRO       = os.environ.get('STRIPE_PRICE_ID_PRO')
+DOMAIN_URL                = os.environ.get('DOMAIN_URL', 'http://localhost:8000')
 
 # ── Suscripción ────────────────────────────────────────────────────────────────────
 # Ciclo y trial
